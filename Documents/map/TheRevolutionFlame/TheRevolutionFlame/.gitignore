@@ -1,0 +1,23 @@
+# File di compilazione Java
+*.class
+target/
+# Ambienti di sviluppo (IDE)
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+# Eclipse
+.classpath
+.project
+.settings/
+# NetBeans
+/nbproject/private/
+/build/
+/dist/
+# File Database Generati a Runtime (Engine H2)
+/db/*.db
+*.mv.db
+*.trace.db
+# OS specific
+.DS_Store
+Thumbs.db
