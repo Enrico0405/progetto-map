@@ -19,10 +19,13 @@ public class GamePanel extends JPanel {
     private JLabel lblSalute;
     private JLabel lblArmaEquipaggiata;
     private JTextArea txtInventarioScorte;
+    private MainFrame mainFrame;
 
-    public GamePanel() {
+    public GamePanel(MainFrame mainFrame) {
         // main layout per il pannello
         this.setLayout(new BorderLayout());
+        
+        this.mainFrame = mainFrame;
 
         // immagine di gioco centrale
         JPanel pnlVisual = new JPanel(new BorderLayout());
@@ -92,6 +95,18 @@ public class GamePanel extends JPanel {
         txtInputComando.setForeground(Color.GREEN); // Stile "Hacker/Terminale retro"
         txtInputComando.setFont(new Font("Monospaced", Font.BOLD, 16));
         txtInputComando.setCaretColor(Color.GREEN); // Cursore lampeggiante verde
+        
+        txtInputComando.addActionListener(e -> { 
+            String testoInserito = txtInputComando.getText().trim();
+            if(!testoInserito.isEmpty()){
+                String[] parti = testoInserito.split("", 2);
+                String azione = parti[0].toUpperCase();
+                String argomento = (parti.length > 1) ? parti[1] : "";
+                mainFrame.inviaAzioneAlServer(azione, argomento);
+                
+                txtInputComando.setText("");
+            }
+        });
 
         pnlTerminale.add(scrollConsole, BorderLayout.CENTER);
         pnlTerminale.add(txtInputComando, BorderLayout.SOUTH);
@@ -177,5 +192,12 @@ public class GamePanel extends JPanel {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    public void mostraSchermataIniziale(){
+        aggiungiTestoAllaConsole("Avvio del terminale...");
+        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
+        
+        txtInputComando.setEnabled(false);
     }
 }
