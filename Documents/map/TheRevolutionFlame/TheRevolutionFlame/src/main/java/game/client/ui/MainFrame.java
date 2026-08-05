@@ -28,9 +28,9 @@ public class MainFrame extends JFrame
     {
         super("TheRevolutionFlame"); //serve per dare il titolo alla finestra
         this.networkClient=new NetworkClient();
-        this.gamePanel=new GamePanel();
+        this.gamePanel = new GamePanel(this);
         this.inventoryDialog=new InventoryDialog();
-        this.mapDialog=new MapDialog();
+        this.mapDialog=new MapDialog(this);
         this.idGiocatoreCorrente=-1;
         inizializzaComponenti();
     }
