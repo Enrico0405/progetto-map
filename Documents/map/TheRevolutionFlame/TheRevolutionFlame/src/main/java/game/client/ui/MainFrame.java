@@ -1,92 +1,122 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package game.client.ui;
-
-/**
- *
- * @author Utente
- */
 
 import game.common.dto.GameResponse;
 import game.common.dto.CommandRequest;
 import game.client.network.NetworkClient;
-import javax.swing.JFrame;
-import java.awt.BorderLayout;
 import game.client.network.ResponseCallback;
 
-public class MainFrame extends JFrame 
-{
-    private NetworkClient networkClient ;
-    private GamePanel gamePanel ;
-    private InventoryDialog inventoryDialog ;
-    private MapDialog mapDialog ;
-    private int idGiocatoreCorrente ;
-    
-    public MainFrame()
-    {
-        super("TheRevolutionFlame"); //serve per dare il titolo alla finestra
-        this.networkClient=new NetworkClient();
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+
+public class MainFrame extends JFrame {
+
+    private NetworkClient networkClient;
+    private GamePanel gamePanel;
+    private InventoryDialog inventoryDialog;
+    private MapDialog mapDialog;
+    private int idGiocatoreCorrente;
+
+    public MainFrame() {
+        super("TheRevolutionFlame");
+        /*
+
+        inizializzazione del client di rete con indirizzo e porta di default
+
+        */
+        this.networkClient = new NetworkClient("127.0.0.1", 8080);
         this.gamePanel = new GamePanel(this);
-        this.inventoryDialog=new InventoryDialog();
-        this.mapDialog=new MapDialog(this);
-        this.idGiocatoreCorrente=-1;
+        this.inventoryDialog = new InventoryDialog();
+        this.mapDialog = new MapDialog(this);
+        this.idGiocatoreCorrente = -1;
         inizializzaComponenti();
     }
-    
-    public void inizializzaComponenti()
-    {
-        //Imposta il gestore del layout per organizzare gli spazi
+
+    public void inizializzaComponenti() {
+        /*
+
+        impostazione del layout manager e aggiunta del pannello centrale
+
+        */
         this.setLayout(new BorderLayout());
-        
-        //Aggiunge il pannello di gioco principale al centro della finestra
         this.add(this.gamePanel, BorderLayout.CENTER);
-        
-        //Garantisce che il processo Java termini quando si preme la "X"
+
+        /*
+
+        configurazione parametri base della finestra principale
+
+        */
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        //Imposta le dimensioni di default della finestra (larghezza, altezza)
         this.setSize(1024, 768);
-        
-        // Centra automaticamente la finestra nello schermo al suo avvio
         this.setLocationRelativeTo(null);
     }
-    
-    public void mostraSchermataIniziale()
-    {
-        // Delega al pannello interno la preparazione dei suoi elementi grafici
+
+    public void mostraSchermataIniziale() {
+        /*
+
+        delega al pannello la visualizzazione iniziale e rende visibile la finestra
+
+        */
         this.gamePanel.mostraSchermataIniziale();
-        
-        // Rende visibile sul monitor la finestra dell'applicazione
         this.setVisible(true);
     }
-    
-    public void inviaAzioneAlServer(String azione,String argomento)
-    {
-        // Creazione del pacchetto dati (DTO) da spedire al server
+
+    public void inviaAzioneAlServer(String azione, String argomento) {
+        /*
+
+        disabilita l'interazione sul pannello per bloccare l'invio di comandi a raffica
+
+        */
+        this.gamePanel.setEnabled(false);
+
+        /*
+
+        creazione del pacchetto dto da inoltrare
+
+        */
         CommandRequest request = new CommandRequest(this.idGiocatoreCorrente, azione, argomento);
 
-        // Inoltro al livello di rete con gestione asincrona della risposta
+        /*
+
+        inoltro asincrono al livello di rete
+
+        */
         this.networkClient.inviaComandoAsincrono(request, new ResponseCallback() {
-            
+
             @Override
             public void onResponse(GameResponse response) {
-                // Quando il server risponde con successo, si passa il DTO alla grafica
-                aggiornaInterfaccia(response);
+                /*
+
+                aggiorna l'interfaccia e riabilita i controlli sull'event dispatch thread di swing
+
+                */
+                SwingUtilities.invokeLater(() -> {
+                    aggiornaInterfaccia(response);
+                    gamePanel.setEnabled(true);
+                });
             }
 
             @Override
-            public void onErrorErrorMessage(String errorMessage) {
-                // Gestione di un eventuale errore (es. server disconnesso o pacchetto perso)
-                System.err.println("Errore di comunicazione con il server: " + errorMessage);
+            public void onError(String errorMessage) {
+                /*
+
+                in caso di fallimento notifica l'errore e riabilita i controlli sull'event dispatch thread
+
+                */
+                SwingUtilities.invokeLater(() -> {
+                    System.err.println("errore di comunicazione con il server: " + errorMessage);
+                    gamePanel.setEnabled(true);
+                });
             }
         });
     }
-    
-    public void aggiornaInterfaccia(GameResponse response)
-    {
-        // Delega l'aggiornamento visivo di tutti i componenti al GamePanel
+
+    public void aggiornaInterfaccia(GameResponse response) {
+        /*
+
+        delega l'aggiornamento visivo di tutti i componenti al gamepanel
+
+        */
         this.gamePanel.renderizzaStato(response);
     }
 }
