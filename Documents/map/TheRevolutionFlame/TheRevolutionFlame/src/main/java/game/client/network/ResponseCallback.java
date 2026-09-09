@@ -4,10 +4,14 @@
  */
 package game.client.network;
 
-/**
- *
- * @author Utente
- */
-public abstract class ResponseCallback {
+import game.common.dto.GameResponse;
+
+public interface ResponseCallback {
     
+/*
+    invocato alla ricezione di un messaggio dal server
+    */
+    void onResponse(GameResponse response);
+
+    void onError(String errorMessage);
 }
