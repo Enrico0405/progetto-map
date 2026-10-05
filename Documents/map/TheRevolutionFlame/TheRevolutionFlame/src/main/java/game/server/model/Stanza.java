@@ -1,4 +1,3 @@
-
 package game.server.model;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,11 +28,13 @@ public class Stanza {
     }
     private Nemico nemicoPresente;
     private List<Item> oggettiNellaStanza;
+    private List<Item> oggettiRichiestiSblocco;
     private final Map<String, Stanza> adiacenze;
 
     public Stanza() {
         this.adiacenze = new HashMap<>();
         this.oggettiNellaStanza = new ArrayList<>();
+        this.oggettiRichiestiSblocco = new ArrayList<>();
     }
 
     public Stanza(int id, int idLivello, String nome, String descrizione, String immagineSfondoPath) {
@@ -44,6 +45,7 @@ public class Stanza {
         this.immagineSfondoPath = immagineSfondoPath;
         this.adiacenze = new HashMap<>();
         this.oggettiNellaStanza = new ArrayList<>();
+        this.oggettiRichiestiSblocco = new ArrayList<>();
     }
 
     public Stanza getAdiacenza(String direzione) {
@@ -77,6 +79,10 @@ public class Stanza {
         return !oggettiNellaStanza.isEmpty();
     }
 
+    public void aggiungiOggettoRichiestoSblocco(Item item) {
+        this.oggettiRichiestiSblocco.add(item);
+    }
+
     // Getters e Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -104,6 +110,9 @@ public class Stanza {
 
     public List<Item> getOggettiNellaStanza() { return oggettiNellaStanza; }
     public void setOggettiNellaStanza(List<Item> oggettiNellaStanza) { this.oggettiNellaStanza = oggettiNellaStanza; }
+
+    public List<Item> getOggettiRichiestiSblocco() { return oggettiRichiestiSblocco; }
+    public void setOggettiRichiestiSblocco(List<Item> oggettiRichiestiSblocco) { this.oggettiRichiestiSblocco = oggettiRichiestiSblocco; }
 
     public Map<String, Stanza> getAdiacenze() { return adiacenze; }
 }
