@@ -4,7 +4,7 @@ import game.server.db.DatabaseManager;
 import game.server.model.GameState;
 import game.server.model.Item;
 import game.server.model.TipoItem;
-import game.server.session.SessionManager;
+import game.server.network.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
