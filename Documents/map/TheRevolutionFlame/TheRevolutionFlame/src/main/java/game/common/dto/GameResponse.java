@@ -9,6 +9,11 @@ public class GameResponse {
     private int idGiocatore;
     private int playerHp;
     private int playerMaxHp;
+    
+    // EQUIPAGGIAMENTO E INVENTARIO A MATRICE (Aggiunti per la nuova GUI)
+    private String currentWeapon; // Nome dell'arma attualmente impugnata
+    private String[][] inventarioNomi;  // Matrice 4x4 con i nomi degli oggetti
+    private String[][] inventarioPaths; // Matrice 4x4 con i percorsi delle icone png
 
     // Dati Nemico
     private int enemyHp;
@@ -50,6 +55,17 @@ public class GameResponse {
 
     public int getPlayerMaxHp() { return playerMaxHp; }
     public void setPlayerMaxHp(int playerMaxHp) { this.playerMaxHp = playerMaxHp; }
+
+    // --- NUOVI GETTER E SETTER PER INVENTARIO ED EQUIPAGGIAMENTO ---
+    public String getCurrentWeapon() { return currentWeapon; }
+    public void setCurrentWeapon(String currentWeapon) { this.currentWeapon = currentWeapon; }
+
+    public String[][] getInventarioNomi() { return inventarioNomi; }
+    public void setInventarioNomi(String[][] inventarioNomi) { this.inventarioNomi = inventarioNomi; }
+
+    public String[][] getInventarioPaths() { return inventarioPaths; }
+    public void setInventarioPaths(String[][] inventarioPaths) { this.inventarioPaths = inventarioPaths; }
+    // ---------------------------------------------------------------
 
     public int getEnemyHp() { return enemyHp; }
     public void setEnemyHp(int enemyHp) { this.enemyHp = enemyHp; }
