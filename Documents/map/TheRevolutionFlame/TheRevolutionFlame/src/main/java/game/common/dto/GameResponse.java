@@ -18,7 +18,7 @@ public class GameResponse {
     private List<String> inventarioPaths; // Lista piatta con i percorsi delle icone png
 
     // Equipaggiamento Giocatore
-    private String currentWeapon;
+    
     private String currentConsumable;
 
     // Inventari strutturati tramite ItemDto (Max 12 elementi per scacchiera)
@@ -58,8 +58,8 @@ public class GameResponse {
     public List<ItemDto> getOggettiStanza() { return oggettiStanza; }
     public void setOggettiStanza(List<ItemDto> oggettiStanza) { this.oggettiStanza = oggettiStanza; }
 
-    public String getCurrentWeapon() { return currentWeapon; }
-    public void setCurrentWeapon(String currentWeapon) { this.currentWeapon = currentWeapon; }
+
+ 
 
     public String getCurrentConsumable() { return currentConsumable; }
     public void setCurrentConsumable(String currentConsumable) { this.currentConsumable = currentConsumable; }

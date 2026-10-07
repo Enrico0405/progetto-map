@@ -1,5 +1,6 @@
 package game.client.ui;
 
+import game.common.dto.ItemDto;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -84,37 +85,45 @@ public class InventoryDialog extends JDialog {
     
     // --- METODI PER IL COLLEGAMENTO CON IL MAINFRAME E IL SERVER ---
 
-    public void aggiornaGriglia(List<String> inventarioLista) {
+    public void aggiornaGriglie(List<ItemDto> invGiocatore, List<ItemDto> invStanza) {
         DefaultTableModel modelGiocatore = (DefaultTableModel) this.tblInventarioGiocatore.getModel();
-        
-        // 1. Svuota tutta la tabella per evitare sovrapposizioni
-        for(int r = 0; r < 4; r++) {
-            for(int c = 0; c < 4; c++) {
+        DefaultTableModel modelStanza = (DefaultTableModel) this.tblOggettiStanza.getModel();
+
+        // 1. Pulizia preventiva di entrambe le scacchiere
+        for(int r = 0; r < modelGiocatore.getRowCount(); r++) {
+            for(int c = 0; c < modelGiocatore.getColumnCount(); c++) {
                 modelGiocatore.setValueAt("", r, c);
+                modelStanza.setValueAt("", r, c);
             }
         }
 
-        // 2. Protezione contro dati nulli
-        if (inventarioLista == null) return;
+        // 2. Popola la scacchiera del Giocatore (G)
+        if (invGiocatore != null) {
+            for (int i = 0; i < invGiocatore.size(); i++) {
+                int riga = i / 4;
+                int col = i % 4;
+                // Prende il nome dal DTO
+                if (riga < modelGiocatore.getRowCount() && invGiocatore.get(i) != null) {
+                    modelGiocatore.setValueAt(invGiocatore.get(i).getNome(), riga, col);
+                }
+            }
+        }
 
-        // 3. Trasforma la lista piatta nella griglia 4x4
-        for (int i = 0; i < inventarioLista.size(); i++) {
-            // MATEMATICA DELLA SCACCHIERA:
-            int riga = i / 4;    // Es: indice 5 -> 5/4 = 1 (Riga B)
-            int col = i % 4;     // Es: indice 5 -> 5%4 = 1 (Colonna 2)
-            
-            // Inserisce l'oggetto nella cella solo se rientra nelle 4 righe
-            if (riga < 4) {
-                modelGiocatore.setValueAt(inventarioLista.get(i), riga, col);
+        // 3. Popola la scacchiera della Stanza (S)
+        if (invStanza != null) {
+            for (int i = 0; i < invStanza.size(); i++) {
+                int riga = i / 4;
+                int col = i % 4;
+                // Prende il nome dal DTO
+                if (riga < modelStanza.getRowCount() && invStanza.get(i) != null) {
+                    modelStanza.setValueAt(invStanza.get(i).getNome(), riga, col);
+                }
             }
         }
     }
 
-    public void aggiornaArmaEquipaggiata(String arma) {
-        if (arma == null || arma.isBlank()) {
-            this.lblArmaEquipaggiata.setText("Arma: Nessuna");
-        } else {
-            this.lblArmaEquipaggiata.setText("Arma: " + arma);
-        }
+    public void aggiornaEquipaggiamento(String arma, String pozione) {
+        this.lblArmaEquipaggiata.setText("Arma: " + (arma != null && !arma.isBlank() ? arma : "Nessuna"));
+        this.lblPozioneEquipaggiata.setText("Pozione: " + (pozione != null && !pozione.isBlank() ? pozione : "Nessuna"));
     }
 }
