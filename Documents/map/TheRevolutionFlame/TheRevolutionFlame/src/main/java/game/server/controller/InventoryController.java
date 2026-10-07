@@ -11,8 +11,10 @@ import java.util.stream.Collectors;
 
 public class InventoryController {
 
-    // Impostiamo il numero di colonne per la griglia di Swing (es. 4 colonne per riga)
+    // Griglia 3 righe x 4 colonne = 12 slot totali
     private static final int COLS = 4;
+    private static final int ROWS = 3;
+    private static final int CAPACITA_MASSIMA = COLS * ROWS; // 12
 
     /**
      * Esegue lo spostamento di un oggetto tra griglie (Giocatore/Stanza).
@@ -36,7 +38,7 @@ public class InventoryController {
         int idxDestinazione = calcolaIndice(destinazione.substring(1));
 
         if (idxOrigine < 0 || idxDestinazione < 0) {
-            return "Coordinate slot non valide.";
+            return "Coordinate slot non valide (usare righe a-c e colonne 1-4).";
         }
 
         Giocatore player = state.getPlayer();
@@ -63,7 +65,7 @@ public class InventoryController {
     }
 
     private void gestisciSpostamentoInterno(List<Item> lista, int idxOrigine, int idxDestinazione) {
-        // Se la destinazione supera la dimensione, aggiungiamo in coda
+        // Se la destinazione supera la dimensione attuale della lista, aggiungiamo in coda
         if (idxDestinazione >= lista.size()) {
             Item item = lista.remove(idxOrigine);
             lista.add(item);
@@ -78,15 +80,19 @@ public class InventoryController {
     private String gestisciTrasferimento(List<Item> sorgente, List<Item> destinazione, 
                                         int idxOrigine, int idxDestinazione, 
                                         Item itemSpostato, char tipoOrigine, String slotDest) {
-        sorgente.remove(idxOrigine);
-
         if (idxDestinazione < destinazione.size()) {
-            // Se lo slot di destinazione contiene già un oggetto, avviene uno scambio
+            // Se lo slot contiene già un oggetto, avviene uno scambio
+            sorgente.remove(idxOrigine);
             Item itemRimpiazzato = destinazione.set(idxDestinazione, itemSpostato);
             sorgente.add(idxOrigine, itemRimpiazzato);
             return "Scambiato " + itemSpostato.getNome() + " con " + itemRimpiazzato.getNome();
         } else {
-            // Inserimento nello slot di destinazione
+            // Verifica capienza massima prima dell'inserimento
+            if (destinazione.size() >= CAPACITA_MASSIMA) {
+                String bersaglio = (tipoOrigine == 'G') ? "della stanza" : "del giocatore";
+                return "Impossibile inserire: l'inventario " + bersaglio + " è pieno (max " + CAPACITA_MASSIMA + " oggetti).";
+            }
+            sorgente.remove(idxOrigine);
             destinazione.add(itemSpostato);
             String azione = (tipoOrigine == 'G') ? "Lasciato " : "Raccolto ";
             return azione + itemSpostato.getNome() + " nello slot " + slotDest;
@@ -95,6 +101,7 @@ public class InventoryController {
 
     /**
      * Converte "b2" o "2b" -> riga 'b' (1), colonna '2' (1) -> (1 * COLS) + 1 = 5
+     * Limita le righe a 'a', 'b', 'c' (0, 1, 2) per un totale di 12 slot.
      */
     private int calcolaIndice(String coord) {
         try {
@@ -112,7 +119,8 @@ public class InventoryController {
 
             int riga = rigaChar - 'a'; // 'a' -> 0, 'b' -> 1, 'c' -> 2
 
-            if (riga < 0 || colonnaNum < 0 || colonnaNum >= COLS) {
+            // Controllo strictly entro la griglia 3x4 (righe 0..2, colonne 0..3)
+            if (riga < 0 || riga >= ROWS || colonnaNum < 0 || colonnaNum >= COLS) {
                 return -1;
             }
 
@@ -126,27 +134,18 @@ public class InventoryController {
     // METODI DI RICERCA CON LAMBDA EXPRESSIONS & STREAM API
     // =========================================================================
 
-    /**
-     * Filtra gli oggetti del Giocatore per TipoItem (es. ARMA, POZIONE).
-     */
     public List<Item> cercaInInventarioPerTipo(Giocatore player, TipoItem tipo) {
         return player.getInventario().stream()
                 .filter(item -> item.getTipo() == tipo)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Filtra gli oggetti della Stanza per TipoItem.
-     */
     public List<Item> cercaInStanzaPerTipo(Stanza stanza, TipoItem tipo) {
         return stanza.getOggettiNellaStanza().stream()
                 .filter(item -> item.getTipo() == tipo)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Cerca oggetti nell'inventario del Giocatore il cui nome contiene una parola chiave (case-insensitive).
-     */
     public List<Item> cercaInInventarioPerNome(Giocatore player, String nome) {
         return player.getInventario().stream()
                 .filter(item -> item.getNome().toLowerCase().contains(nome.toLowerCase()))
@@ -284,28 +283,17 @@ public class InventoryController {
             }
         }
 
-        // Azzera lo slot equipaggiato e rimuove l'oggetto dalla lista
         player.setConsumabileEquipaggiato(null);
         player.rimuoviItem(consumabile);
 
         return messaggioEsito;
     }
 
-    /**
-     * Recupera un Item dall'inventario del giocatore o dalla stanza
-     * traducendo la coordinata da scacchiera (es. "a1") a indice di lista.
-     *
-     * @param state Stato attuale del gioco
-     * @param origine 'G' per inventario Giocatore, 'S' per la Stanza
-     * @param coordinate Coordinate dello slot sulla scacchiera (es. "a1", "b2")
-     * @return L'oggetto Item se presente, altrimenti null
-     */
     public Item ottieniItemDaCoordinata(GameState state, char origine, String coordinate) {
         if (state == null || coordinate == null) {
             return null;
         }
 
-        // Il Controller mantiene la responsabilità di convertire la coordinata da scacchiera ad indice
         int index = calcolaIndice(coordinate);
         if (index < 0) {
             return null;
@@ -324,7 +312,7 @@ public class InventoryController {
             return listaTarget.get(index);
         }
 
-        return null; // Slot vuoto o indice fuori dai limiti
+        return null;
     }
 
-} // <--- QUESTA GRAFFA CHIUDE LA CLASSE PER TUTTO IL FILE
+}

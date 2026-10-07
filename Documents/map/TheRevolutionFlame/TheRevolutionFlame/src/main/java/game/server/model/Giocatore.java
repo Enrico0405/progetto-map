@@ -1,6 +1,4 @@
-
 package game.server.model;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +8,8 @@ import java.util.Optional;
  * Rappresenta lo stato e le statistiche del giocatore attivo in RAM.
  */
 public class Giocatore {
+    public static final int CAPACITA_MASSIMA = 12; // 3 righe x 4 colonne
+
     private int id;
     private String nome;
     private int hp;
@@ -41,8 +41,11 @@ public class Giocatore {
         return this.hp > 0;
     }
 
-    public void aggiungiItem(Item item) {
-        this.inventario.add(item);
+    public boolean aggiungiItem(Item item) {
+        if (this.inventario.size() >= CAPACITA_MASSIMA) {
+            return false; // Inventario pieno
+        }
+        return this.inventario.add(item);
     }
 
     public boolean rimuoviItem(Item item) {
@@ -83,4 +86,3 @@ public class Giocatore {
     public Stanza getStanzaCorrente() { return stanzaCorrente; }
     public void setStanzaCorrente(Stanza stanzaCorrente) { this.stanzaCorrente = stanzaCorrente; }
 }
-

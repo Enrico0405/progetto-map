@@ -1,4 +1,5 @@
 package game.server.model;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.Optional;
  * Gestisce direttamente la lista degli oggetti presenti al suo interno.
  */
 public class Stanza {
+    public static final int CAPACITA_MASSIMA = 12; // 3 righe x 4 colonne
+
     private int id;
     private int idLivello;
     private String nome;
@@ -17,7 +20,7 @@ public class Stanza {
     private String immagineSfondoPath;
     private boolean bloccata;
     private boolean stanza_letale;
-    private int stanza_letale_danno ;
+    private int stanza_letale_danno;
 
     public int getStanza_letale_danno() {
         return stanza_letale_danno;
@@ -26,6 +29,7 @@ public class Stanza {
     public void setStanza_letale_danno(int stanza_letale_danno) {
         this.stanza_letale_danno = stanza_letale_danno;
     }
+
     private Nemico nemicoPresente;
     private List<Item> oggettiNellaStanza;
     private List<Item> oggettiRichiestiSblocco;
@@ -61,8 +65,11 @@ public class Stanza {
     }
 
     // Metodi di utilità per la gestione degli oggetti nella stanza
-    public void aggiungiOggetto(Item item) {
-        this.oggettiNellaStanza.add(item);
+    public boolean aggiungiOggetto(Item item) {
+        if (this.oggettiNellaStanza.size() >= CAPACITA_MASSIMA) {
+            return false; // Stanza piena
+        }
+        return this.oggettiNellaStanza.add(item);
     }
 
     public boolean rimuoviOggetto(Item item) {
@@ -116,5 +123,3 @@ public class Stanza {
 
     public Map<String, Stanza> getAdiacenze() { return adiacenze; }
 }
-
-

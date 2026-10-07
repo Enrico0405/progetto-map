@@ -1,5 +1,7 @@
 package game.common.dto;
 
+import java.util.List;
+
 public class GameResponse {
 
     private String messaggio;
@@ -9,6 +11,14 @@ public class GameResponse {
     private int idGiocatore;
     private int playerHp;
     private int playerMaxHp;
+
+    // Equipaggiamento Giocatore
+    private String currentWeapon;
+    private String currentConsumable;
+
+    // Inventari strutturati tramite ItemDto (Max 12 elementi per scacchiera)
+    private List<ItemDto> inventarioGiocatore;
+    private List<ItemDto> oggettiStanza;
 
     // Dati Nemico
     private int enemyHp;
@@ -36,6 +46,20 @@ public class GameResponse {
         this.messaggio = messaggio;
     }
 
+    // --- GETTER E SETTER PER INVENTARIO ED EQUIPAGGIAMENTO ---
+    public List<ItemDto> getInventarioGiocatore() { return inventarioGiocatore; }
+    public void setInventarioGiocatore(List<ItemDto> inventarioGiocatore) { this.inventarioGiocatore = inventarioGiocatore; }
+
+    public List<ItemDto> getOggettiStanza() { return oggettiStanza; }
+    public void setOggettiStanza(List<ItemDto> oggettiStanza) { this.oggettiStanza = oggettiStanza; }
+
+    public String getCurrentWeapon() { return currentWeapon; }
+    public void setCurrentWeapon(String currentWeapon) { this.currentWeapon = currentWeapon; }
+
+    public String getCurrentConsumable() { return currentConsumable; }
+    public void setCurrentConsumable(String currentConsumable) { this.currentConsumable = currentConsumable; }
+
+    // --- GETTER E SETTER STANDARD ---
     public String getMessaggio() { return messaggio; }
     public void setMessaggio(String messaggio) { this.messaggio = messaggio; }
 

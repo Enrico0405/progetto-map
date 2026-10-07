@@ -6,7 +6,7 @@ public class CommandRequest {
     private String azione;
     private String argomento;
 
-    // Costruttore vuoto necessario a Jackson per la deserializzazione JSON
+    // Costruttore vuoto per Jackson
     public CommandRequest() {
     }
 
