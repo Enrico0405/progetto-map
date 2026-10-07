@@ -59,6 +59,9 @@ public class MainFrame extends JFrame {
         */
         this.gamePanel.mostraSchermataIniziale();
         this.setVisible(true);
+        if (this.inventoryDialog != null) {
+            this.inventoryDialog.setVisible(true);
+        }
     }
 
     public void inviaAzioneAlServer(String azione, String argomento) {
