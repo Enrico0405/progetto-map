@@ -8,7 +8,7 @@ import game.server.model.Stanza;
  * Gestisce la logica degli effetti ambientali (danno da gas/stanza letale)
  * avviando e interrompendo thread temporizzati per ciascuna sessione di gioco.
  */
-public class EnviromentController {
+public class EnvironmentController {
 
     private Thread threadDannoAttivo;
 
