@@ -24,7 +24,7 @@ public class MainFrame extends JFrame {
         inizializzazione del client di rete con indirizzo e porta di default
 
         */
-        this.networkClient = new NetworkClient("127.0.0.1", 8080);
+        this.networkClient = new NetworkClient("127.0.0.1", 12345);
         this.gamePanel = new GamePanel(this);
         this.inventoryDialog = new InventoryDialog(this);
         this.mapDialog = new MapDialog(this);
