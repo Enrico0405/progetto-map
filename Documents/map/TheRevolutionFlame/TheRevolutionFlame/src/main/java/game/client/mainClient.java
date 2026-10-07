@@ -4,11 +4,6 @@
  */
 package game.client;
 
-/**
- *
- * @author Utente
- */
-
 import game.client.ui.MainFrame;
 import javax.swing.SwingUtilities;
 
@@ -17,6 +12,9 @@ public class mainClient {
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
             frame.mostraSchermataIniziale();
+            
+            // Subito dopo aver mostrato la grafica, tenta la connessione al server
+            frame.connettiAlServer();
         });
     }
 }
