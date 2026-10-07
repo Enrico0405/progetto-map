@@ -95,6 +95,8 @@ public class GamePanel extends JPanel {
         txtInputComando.setForeground(Color.GREEN); // Stile "Hacker/Terminale retro"
         txtInputComando.setFont(new Font("Monospaced", Font.BOLD, 16));
         txtInputComando.setCaretColor(Color.GREEN); // Cursore lampeggiante verde
+        txtInputComando.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2)); // Crea un riquadro verde
+        txtInputComando.setPreferredSize(new Dimension(0, 40));
         
         txtInputComando.addActionListener(e -> { 
             String testoInserito = txtInputComando.getText().trim();
