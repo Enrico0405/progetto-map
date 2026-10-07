@@ -99,10 +99,26 @@ public class GamePanel extends JPanel {
         txtInputComando.addActionListener(e -> { 
             String testoInserito = txtInputComando.getText().trim();
             if(!testoInserito.isEmpty()){
-                String[] parti = testoInserito.split("", 2);
-                String azione = parti[0].toUpperCase();
-                String argomento = (parti.length > 1) ? parti[1] : "";
-                mainFrame.inviaAzioneAlServer(azione, argomento);
+                
+                // 1. Caso speciale: il giocatore inserisce l'ID (es. "id:Enrico123")
+                if (testoInserito.toLowerCase().startsWith("id:")) {
+                    // Prende tutto ciò che c'è dopo i primi 3 caratteri ("id:")
+                    String nomeId = testoInserito.substring(3).trim();
+                    mainFrame.inviaAzioneAlServer("ID", nomeId);
+                } 
+                // 2. Tutti gli altri comandi di gioco normali
+                else {
+                    // Divide la frase in massimo 2 parti, tagliando SOLO al PRIMO SPAZIO
+                    String[] parti = testoInserito.split(" ", 2); 
+                    
+                    // La prima parola diventa l'Azione (messa in maiuscolo per comodità)
+                    String azione = parti[0].toUpperCase(); 
+                    
+                    // Tutto il resto della frase diventa l'Argomento (se esiste)
+                    String argomento = (parti.length > 1) ? parti[1].trim() : ""; 
+                    
+                    mainFrame.inviaAzioneAlServer(azione, argomento);
+                }
                 
                 txtInputComando.setText("");
             }

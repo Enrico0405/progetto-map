@@ -31,8 +31,8 @@ public class MapDialog extends JDialog {
         lblImmagineMappa.setBackground(Color.BLACK);
         lblImmagineMappa.setOpaque(true); // Serve per far vedere lo sfondo nero
         
-        // aggiunta al dialog
-        this.add(lblImmagineMappa, BorderLayout.CENTER);
+        // Aggiunta con barra di scorrimento
+        this.add(new JScrollPane(lblImmagineMappa), BorderLayout.CENTER);
     }
 
     /**

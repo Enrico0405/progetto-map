@@ -26,7 +26,7 @@ public class MainFrame extends JFrame {
         */
         this.networkClient = new NetworkClient("127.0.0.1", 8080);
         this.gamePanel = new GamePanel(this);
-        this.inventoryDialog = new InventoryDialog();
+        this.inventoryDialog = new InventoryDialog(this);
         this.mapDialog = new MapDialog(this);
         this.idGiocatoreCorrente = -1;
         inizializzaComponenti();
