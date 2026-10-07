@@ -1,5 +1,7 @@
 package game.server.controller;
 
+import game.common.dto.GameResponse;
+import game.common.dto.ItemDto;
 import game.server.db.DatabaseManager;
 import game.server.model.GameState;
 import game.server.model.Item;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GameEngine {
 
@@ -169,6 +172,64 @@ public class GameEngine {
         }
 
         return "Comando non riconosciuto. Digita 'help' per la lista dei comandi disponibili.";
+    }
+
+    // =========================================================================
+    // CREAZIONE RESPONSE DTO PER IL CLIENT
+    // =========================================================================
+
+    public GameResponse creaGameResponse(int idSessione, String messaggioEsito) {
+        GameState state = sessionManager.getSessione(idSessione);
+        GameResponse response = new GameResponse(messaggioEsito);
+
+        if (state == null) {
+            return response;
+        }
+
+        // --- DATI GIOCATORE ED EQUIPAGGIAMENTO ---
+        if (state.getPlayer() != null) {
+            response.setIdGiocatore(state.getPlayer().getId());
+            response.setPlayerHp(state.getPlayer().getHp());
+            response.setPlayerMaxHp(state.getPlayer().getMaxHp());
+
+            if (state.getPlayer().getArmaEquipaggiata() != null) {
+                response.setCurrentWeapon(state.getPlayer().getArmaEquipaggiata().getNome());
+            }
+            if (state.getPlayer().getConsumabileEquipaggiato() != null) {
+                response.setCurrentConsumable(state.getPlayer().getConsumabileEquipaggiato().getNome());
+            }
+
+            if (state.getPlayer().getInventario() != null) {
+                List<ItemDto> invPlayerDto = state.getPlayer().getInventario().stream()
+                        .map(item -> new ItemDto(item.getNome(), null))
+                        .collect(Collectors.toList());
+                response.setInventarioGiocatore(invPlayerDto);
+            }
+        }
+
+        // --- DATI STANZA ATTUALE ---
+        if (state.getStanzaAttuale() != null) {
+            response.setNomeStanza(state.getStanzaAttuale().getNome());
+            response.setDescrizioneStanza(state.getStanzaAttuale().getDescrizione());
+            response.setStanzaBloccata(state.getStanzaAttuale().isBloccata());
+
+            if (state.getStanzaAttuale().getOggettiNellaStanza() != null) {
+                List<ItemDto> invStanzaDto = state.getStanzaAttuale().getOggettiNellaStanza().stream()
+                        .map(item -> new ItemDto(item.getNome(), null))
+                        .collect(Collectors.toList());
+                response.setOggettiStanza(invStanzaDto);
+            }
+
+            if (state.getStanzaAttuale().getNemicoPresente() != null) {
+                response.setEnemyHp(state.getStanzaAttuale().getNemicoPresente().getHp());
+                response.setEnemyMaxHp(state.getStanzaAttuale().getNemicoPresente().getMaxHp());
+                response.setEnemySpritePath(state.getStanzaAttuale().getNemicoPresente().getSpritePath());
+            }
+        }
+
+        response.setInCombattimento(state.isInCombattimento());
+
+        return response;
     }
 
     // =========================================================================
