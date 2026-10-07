@@ -6,6 +6,7 @@ import game.server.network.GameServer;
 import game.server.network.SessionManager;
 
 /**
+ * Programma main del server 
  * Entry-point principale dell'applicazione Server.
  * Applica la strategia Fail-Fast: verifica la connessione al Database
  * prima di istanziare l'engine di gioco e avviare la porta di rete.
