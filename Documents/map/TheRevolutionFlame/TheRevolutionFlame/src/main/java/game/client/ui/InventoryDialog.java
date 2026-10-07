@@ -81,4 +81,38 @@ public class InventoryDialog extends JDialog {
         
         // Qui andrà la logica per aggiornare i DefaultTableModel con le coordinate corrette
     }
+    
+    // --- METODI PER IL COLLEGAMENTO CON IL MAINFRAME E IL SERVER ---
+
+    public void aggiornaGriglia(String[][] inventarioNomi, String[][] inventarioPaths) {
+        // 1. Recupera il modello dati della scacchiera del giocatore
+        DefaultTableModel modelGiocatore = (DefaultTableModel) this.tblInventarioGiocatore.getModel();
+        
+        // 2. Protezione contro dati nulli in caso di server appena avviato
+        if (inventarioNomi == null) return;
+
+        // 3. Itera sulla matrice 4x4 inviata dal server e riempie le celle
+        for (int riga = 0; riga < Math.min(4, inventarioNomi.length); riga++) {
+            for (int col = 0; col < Math.min(4, inventarioNomi[riga].length); col++) {
+                
+                String nomeOggetto = inventarioNomi[riga][col];
+                
+                // Se la cella è nulla, puliamo la casella visiva
+                if (nomeOggetto == null) {
+                    nomeOggetto = ""; 
+                }
+                
+                // Inserisce il nome dell'oggetto esattamente nella riga e colonna della JTable
+                modelGiocatore.setValueAt(nomeOggetto, riga, col);
+            }
+        }
+    }
+
+    public void aggiornaArmaEquipaggiata(String arma) {
+        if (arma == null || arma.isBlank()) {
+            this.lblArmaEquipaggiata.setText("Arma: Nessuna");
+        } else {
+            this.lblArmaEquipaggiata.setText("Arma: " + arma);
+        }
+    }
 }

@@ -112,12 +112,14 @@ public class MainFrame extends JFrame {
     }
 
     public void aggiornaInterfaccia(GameResponse response) {
-        /*
-
-        delega l'aggiornamento visivo di tutti i componenti al gamepanel
-
-        */
+        // 1. Aggiorna il pannello principale (testo, salute, mappa)
         this.gamePanel.renderizzaStato(response);
+        
+        // 2. Aggiorna la scacchiera dell'inventario con le nuove matrici
+        if (this.inventoryDialog != null) {
+            this.inventoryDialog.aggiornaGriglia(response.getInventarioNomi(), response.getInventarioPaths());
+            this.inventoryDialog.aggiornaArmaEquipaggiata(response.getCurrentWeapon());
+        }
     }
     
     public void connettiAlServer() {
