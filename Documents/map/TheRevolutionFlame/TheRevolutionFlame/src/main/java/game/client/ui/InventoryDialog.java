@@ -47,14 +47,14 @@ public class InventoryDialog extends JDialog {
         
         // Creazione Scacchiera Giocatore (G)
         // Le colonne rappresentano le lettere (es. Ga, Gb, Gc)
-        String[] colonneGiocatore = {"A", "B", "C", "D"};
+        String[] colonneGiocatore = {"1", "2", "3", "4"};
         DefaultTableModel modelGiocatore = new DefaultTableModel(colonneGiocatore, 4); // 4 righe (numeri)
         this.tblInventarioGiocatore = new JTable(modelGiocatore);
         this.tblInventarioGiocatore.setEnabled(false); // Impedisce la modifica manuale delle celle
         pnlScacchiere.add(new JScrollPane(tblInventarioGiocatore));
 
         // Creazione Scacchiera Stanza (S)
-        String[] colonneStanza = {"A", "B", "C", "D"};
+        String[] colonneStanza = {"1", "2", "3", "4"};
         DefaultTableModel modelStanza = new DefaultTableModel(colonneStanza, 4);
         this.tblOggettiStanza = new JTable(modelStanza);
         this.tblOggettiStanza.setEnabled(false);
@@ -84,26 +84,28 @@ public class InventoryDialog extends JDialog {
     
     // --- METODI PER IL COLLEGAMENTO CON IL MAINFRAME E IL SERVER ---
 
-    public void aggiornaGriglia(String[][] inventarioNomi, String[][] inventarioPaths) {
-        // 1. Recupera il modello dati della scacchiera del giocatore
+    public void aggiornaGriglia(List<String> inventarioLista) {
         DefaultTableModel modelGiocatore = (DefaultTableModel) this.tblInventarioGiocatore.getModel();
         
-        // 2. Protezione contro dati nulli in caso di server appena avviato
-        if (inventarioNomi == null) return;
+        // 1. Svuota tutta la tabella per evitare sovrapposizioni
+        for(int r = 0; r < 4; r++) {
+            for(int c = 0; c < 4; c++) {
+                modelGiocatore.setValueAt("", r, c);
+            }
+        }
 
-        // 3. Itera sulla matrice 4x4 inviata dal server e riempie le celle
-        for (int riga = 0; riga < Math.min(4, inventarioNomi.length); riga++) {
-            for (int col = 0; col < Math.min(4, inventarioNomi[riga].length); col++) {
-                
-                String nomeOggetto = inventarioNomi[riga][col];
-                
-                // Se la cella è nulla, puliamo la casella visiva
-                if (nomeOggetto == null) {
-                    nomeOggetto = ""; 
-                }
-                
-                // Inserisce il nome dell'oggetto esattamente nella riga e colonna della JTable
-                modelGiocatore.setValueAt(nomeOggetto, riga, col);
+        // 2. Protezione contro dati nulli
+        if (inventarioLista == null) return;
+
+        // 3. Trasforma la lista piatta nella griglia 4x4
+        for (int i = 0; i < inventarioLista.size(); i++) {
+            // MATEMATICA DELLA SCACCHIERA:
+            int riga = i / 4;    // Es: indice 5 -> 5/4 = 1 (Riga B)
+            int col = i % 4;     // Es: indice 5 -> 5%4 = 1 (Colonna 2)
+            
+            // Inserisce l'oggetto nella cella solo se rientra nelle 4 righe
+            if (riga < 4) {
+                modelGiocatore.setValueAt(inventarioLista.get(i), riga, col);
             }
         }
     }

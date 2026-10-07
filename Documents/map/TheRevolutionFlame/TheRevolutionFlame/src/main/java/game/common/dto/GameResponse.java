@@ -1,5 +1,7 @@
 package game.common.dto;
 
+import java.util.List;
+
 public class GameResponse {
 
     private String messaggio;
@@ -10,10 +12,10 @@ public class GameResponse {
     private int playerHp;
     private int playerMaxHp;
     
-    // EQUIPAGGIAMENTO E INVENTARIO A MATRICE (Aggiunti per la nuova GUI)
+    // EQUIPAGGIAMENTO E INVENTARIO A LISTA (Aggiornati per la nuova logica del Server)
     private String currentWeapon; // Nome dell'arma attualmente impugnata
-    private String[][] inventarioNomi;  // Matrice 4x4 con i nomi degli oggetti
-    private String[][] inventarioPaths; // Matrice 4x4 con i percorsi delle icone png
+    private List<String> inventarioNomi;  // Lista piatta con i nomi degli oggetti
+    private List<String> inventarioPaths; // Lista piatta con i percorsi delle icone png
 
     // Dati Nemico
     private int enemyHp;
@@ -60,11 +62,11 @@ public class GameResponse {
     public String getCurrentWeapon() { return currentWeapon; }
     public void setCurrentWeapon(String currentWeapon) { this.currentWeapon = currentWeapon; }
 
-    public String[][] getInventarioNomi() { return inventarioNomi; }
-    public void setInventarioNomi(String[][] inventarioNomi) { this.inventarioNomi = inventarioNomi; }
+    public List<String> getInventarioNomi() { return inventarioNomi; }
+    public void setInventarioNomi(List<String> inventarioNomi) { this.inventarioNomi = inventarioNomi; }
 
-    public String[][] getInventarioPaths() { return inventarioPaths; }
-    public void setInventarioPaths(String[][] inventarioPaths) { this.inventarioPaths = inventarioPaths; }
+    public List<String> getInventarioPaths() { return inventarioPaths; }
+    public void setInventarioPaths(List<String> inventarioPaths) { this.inventarioPaths = inventarioPaths; }
     // ---------------------------------------------------------------
 
     public int getEnemyHp() { return enemyHp; }

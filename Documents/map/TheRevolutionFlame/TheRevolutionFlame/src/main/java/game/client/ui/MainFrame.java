@@ -117,7 +117,7 @@ public class MainFrame extends JFrame {
         
         // 2. Aggiorna la scacchiera dell'inventario con le nuove matrici
         if (this.inventoryDialog != null) {
-            this.inventoryDialog.aggiornaGriglia(response.getInventarioNomi(), response.getInventarioPaths());
+            this.inventoryDialog.aggiornaGriglia(response.getInventarioNomi());
             this.inventoryDialog.aggiornaArmaEquipaggiata(response.getCurrentWeapon());
         }
     }
