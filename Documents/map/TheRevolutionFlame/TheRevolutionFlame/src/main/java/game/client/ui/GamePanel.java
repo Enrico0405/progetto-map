@@ -214,6 +214,10 @@ public class GamePanel extends JPanel {
         aggiungiTestoAllaConsole("Avvio del terminale...");
         aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
         
-        txtInputComando.setEnabled(false);
+        // ABILITA l'input testuale per permettere al giocatore di scrivere
+        txtInputComando.setEnabled(true);
+        
+        // Mette il cursore lampeggiante in automatico sulla barra
+        txtInputComando.requestFocusInWindow(); 
     }
 }
