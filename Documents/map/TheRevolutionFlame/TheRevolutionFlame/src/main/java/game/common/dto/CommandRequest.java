@@ -1,4 +1,5 @@
 package game.common.dto;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class CommandRequest {
 
@@ -19,6 +20,7 @@ public class CommandRequest {
     /**
      * Ricostruisce la stringa di comando completa per la regex del GameEngine.
      */
+    @JsonIgnore
     public String getComandoCompleto() {
         if (azione == null || azione.isBlank()) {
             return (argomento != null) ? argomento.trim() : "";

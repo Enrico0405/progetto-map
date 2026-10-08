@@ -102,12 +102,11 @@ public class GamePanel extends JPanel {
             String testoInserito = txtInputComando.getText().trim();
             if(!testoInserito.isEmpty()){
                 
-                // 1. Caso speciale: il giocatore inserisce l'ID (es. "id:Enrico123")
+                // 1. Caso speciale: il giocatore inserisce l'ID (es. "id:123")
                 if (testoInserito.toLowerCase().startsWith("id:")) {
-                    // Prende tutto ciò che c'è dopo i primi 3 caratteri ("id:")
-                    String nomeId = testoInserito.substring(3).trim();
-                    mainFrame.inviaAzioneAlServer("ID", nomeId);
-                } 
+                    // Invia l'intera stringa esatta "id:123" come azione, lasciando vuoto l'argomento
+                    mainFrame.inviaAzioneAlServer(testoInserito, "");
+                }
                 // 2. Tutti gli altri comandi di gioco normali
                 else {
                     // Divide la frase in massimo 2 parti, tagliando SOLO al PRIMO SPAZIO
