@@ -6,6 +6,7 @@ package game.client.ui;
 import game.common.dto.GameResponse;
 import javax.swing.*;
 import java.awt.*;
+import game.client.util.ImageCacheManager;
 
 public class GamePanel extends JPanel {
 
@@ -85,9 +86,10 @@ public class GamePanel extends JPanel {
         txtLogConsole.setEditable(false);
         txtLogConsole.setBackground(Color.BLACK);
         txtLogConsole.setForeground(Color.WHITE);
-        txtLogConsole.setPreferredSize(new Dimension(0, 150)); // altezza fissa per dare molto spazio al testo
+        //txtLogConsole.setPreferredSize(new Dimension(0, 150)); // altezza fissa per dare molto spazio al testo
         
         JScrollPane scrollConsole = new JScrollPane(txtLogConsole);
+        scrollConsole.setPreferredSize(new Dimension(0, 150));
         
         // barra di input
         txtInputComando = new JTextField();
@@ -163,14 +165,10 @@ public class GamePanel extends JPanel {
         }
 
         if (percorsoImmagine != null && !percorsoImmagine.isEmpty()) {
-            /* togliere le spunte di commento quando imagecachemanager è pronto:
-             * ImageIcon icona = ImageCacheManager.getIcona(percorsoImmagine);
-             * lblSfondoStanza.setIcon(icona);
-             * lblSfondoStanza.setText(""); // rimuove placeholder testuale
-             */
-             
-             // placeholder temporaneo debug
-             lblSfondoStanza.setText("[IMMAGINE CARICATA: " + percorsoImmagine + "]");
+             // Carica la vera immagine PNG
+             ImageIcon icona = ImageCacheManager.getIcona(percorsoImmagine);
+             lblSfondoStanza.setIcon(icona);
+             lblSfondoStanza.setText(""); 
         }
 
         // gestione combattimento
