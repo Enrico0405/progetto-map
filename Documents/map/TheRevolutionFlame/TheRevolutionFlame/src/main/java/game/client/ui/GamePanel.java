@@ -171,22 +171,29 @@ public class GamePanel extends JPanel {
              // Carica la vera immagine PNG
              ImageIcon icona = ImageCacheManager.getIcona(percorsoImmagine);
              
-             // Calcola le dimensioni del riquadro disponibile
-             int larghezza = lblSfondoStanza.getWidth();
-             int altezza = lblSfondoStanza.getHeight();
-             
-             // Sicurezza: se la finestra si sta ancora aprendo e la larghezza è 0, 
-             // usa una stima basata sulla grandezza del MainFrame
-             if (larghezza <= 0) larghezza = 800; 
-             if (altezza <= 0) altezza = 580;
-             
-             // Ridimensiona l'immagine adattandola al riquadro (SCALE_SMOOTH mantiene la qualità)
-             Image imgOriginale = icona.getImage();
-             Image imgScalata = imgOriginale.getScaledInstance(larghezza, altezza, Image.SCALE_SMOOTH);
-             
-             // Inserisce l'immagine scalata
-             lblSfondoStanza.setIcon(new ImageIcon(imgScalata));
-             lblSfondoStanza.setText(""); 
+             // CONTROLLO DI SICUREZZA: procede solo se l'immagine è stata effettivamente trovata
+             if (icona != null && icona.getImage() != null && icona.getIconWidth() > 0) {
+                 // Calcola le dimensioni del riquadro disponibile
+                 int larghezza = lblSfondoStanza.getWidth();
+                 int altezza = lblSfondoStanza.getHeight();
+                 
+                 // Sicurezza: se la finestra si sta ancora aprendo e la larghezza è 0
+                 if (larghezza <= 0) larghezza = 800; 
+                 if (altezza <= 0) altezza = 580;
+                 
+                 // Ridimensiona l'immagine adattandola al riquadro (SCALE_SMOOTH mantiene la qualità)
+                 Image imgOriginale = icona.getImage();
+                 Image imgScalata = imgOriginale.getScaledInstance(larghezza, altezza, Image.SCALE_SMOOTH);
+                 
+                 // Inserisce l'immagine scalata
+                 lblSfondoStanza.setIcon(new ImageIcon(imgScalata));
+                 lblSfondoStanza.setText(""); 
+             } else {
+                 // SE IL FILE MANCA: nessun crash, rimuove l'icona e ti avvisa con un testo rosso
+                 lblSfondoStanza.setIcon(null);
+                 lblSfondoStanza.setText("[FILE GRAFICO MANCANTE: " + percorsoImmagine + "]");
+                 lblSfondoStanza.setForeground(Color.RED);
+             }
         }
 
         // gestione combattimento
