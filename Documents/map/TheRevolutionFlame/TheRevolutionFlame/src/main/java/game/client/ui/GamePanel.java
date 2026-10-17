@@ -167,7 +167,22 @@ public class GamePanel extends JPanel {
         if (percorsoImmagine != null && !percorsoImmagine.isEmpty()) {
              // Carica la vera immagine PNG
              ImageIcon icona = ImageCacheManager.getIcona(percorsoImmagine);
-             lblSfondoStanza.setIcon(icona);
+             
+             // Calcola le dimensioni del riquadro disponibile
+             int larghezza = lblSfondoStanza.getWidth();
+             int altezza = lblSfondoStanza.getHeight();
+             
+             // Sicurezza: se la finestra si sta ancora aprendo e la larghezza è 0, 
+             // usa una stima basata sulla grandezza del MainFrame
+             if (larghezza <= 0) larghezza = 800; 
+             if (altezza <= 0) altezza = 580;
+             
+             // Ridimensiona l'immagine adattandola al riquadro (SCALE_SMOOTH mantiene la qualità)
+             Image imgOriginale = icona.getImage();
+             Image imgScalata = imgOriginale.getScaledInstance(larghezza, altezza, Image.SCALE_SMOOTH);
+             
+             // Inserisce l'immagine scalata
+             lblSfondoStanza.setIcon(new ImageIcon(imgScalata));
              lblSfondoStanza.setText(""); 
         }
 
