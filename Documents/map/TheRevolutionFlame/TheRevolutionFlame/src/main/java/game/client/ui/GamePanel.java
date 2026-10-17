@@ -156,9 +156,12 @@ public class GamePanel extends JPanel {
             lblSalute.setForeground(Color.GREEN);
         }
 
-        // aggiorna immagine centrale: preferisce la mappa allo sfondo
+        // aggiorna immagine centrale: priorità assoluta al nemico, poi mappa, poi sfondo stanza
         String percorsoImmagine;
-        if (response.getMappaPngPath() != null && !response.getMappaPngPath().isEmpty()) {
+        
+        if (response.isInCombattimento() && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
+            percorsoImmagine = response.getEnemySpritePath();
+        } else if (response.getMappaPngPath() != null && !response.getMappaPngPath().isEmpty()) {
             percorsoImmagine = response.getMappaPngPath();
         } else {
             percorsoImmagine = response.getStanzaSfondoPath();
