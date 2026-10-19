@@ -47,8 +47,8 @@ public class mainServer {
         SessionManager sessionManager = new SessionManager();
         GameEngine gameEngine = new GameEngine(dbManager, sessionManager);
 
-        // 3. Istanziazione del server di rete
-        GameServer server = new GameServer(porta, sessionManager, gameEngine);
+        // 3. Istanziazione del server di rete (passando anche dbManager)
+        GameServer server = new GameServer(porta, sessionManager, gameEngine, dbManager);
 
         // 4. Registrazione dello Shutdown Hook per la pulizia delle risorse in caso di arresto
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

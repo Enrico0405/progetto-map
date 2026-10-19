@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import game.common.dto.CommandRequest;
 import game.common.dto.GameResponse;
 import game.server.controller.GameEngine;
+import game.server.db.DatabaseManager;
 import game.server.model.GameState;
 import game.server.network.SessionManager;
 
@@ -22,13 +23,15 @@ public class ClientHandler implements Runnable {
     private final Socket socket;
     private final GameEngine gameEngine;
     private final SessionManager sessionManager;
+    private final DatabaseManager dbManager;
     private final int idSessione;
     private final ObjectMapper objectMapper;
 
-    public ClientHandler(Socket socket, GameEngine gameEngine, SessionManager sessionManager, int idSessione) {
+    public ClientHandler(Socket socket, GameEngine gameEngine, SessionManager sessionManager, DatabaseManager dbManager, int idSessione) {
         this.socket = socket;
         this.gameEngine = gameEngine;
         this.sessionManager = sessionManager;
+        this.dbManager = dbManager;
         this.idSessione = idSessione;
         this.objectMapper = new ObjectMapper();
     }
@@ -102,12 +105,16 @@ public class ClientHandler implements Runnable {
                 }
             }
 
-            // Dati Stanza e Blocco
+            // Dati Stanza, Blocco e Mappa Livello
             if (state.getStanzaAttuale() != null) {
                 response.setNomeStanza(state.getStanzaAttuale().getNome());
                 response.setDescrizioneStanza(state.getStanzaAttuale().getDescrizione());
                 response.setStanzaSfondoPath(state.getStanzaAttuale().getImmagineSfondoPath());
                 response.setStanzaBloccata(state.getStanzaAttuale().isBloccata());
+
+                // Recupera il percorso della mappa per il livello corrente della stanza
+                int idLivello = state.getStanzaAttuale().getIdLivello();
+                response.setMappaPngPath(dbManager.getPercorsoMappaLivello(idLivello));
             }
 
             // Dati Combattimento e Nemico
