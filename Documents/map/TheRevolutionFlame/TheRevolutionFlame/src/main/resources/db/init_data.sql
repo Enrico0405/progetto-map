@@ -12,7 +12,7 @@ INSERT INTO IMMAGINI (id_img, percorso_file, tipo_risorsa) VALUES
 (6, 'primo_livello/periferia.png', 'Stanza'),
 (7, 'secondo_livello/mappa/mappa_secondo_livello.png', 'Mappa'),
 (8, 'secondo_livello/atrio_d''ingresso.png', 'Stanza'),
-(9, 'secondo_livello/navata_centrale.png', 'Stanza'),
+(9, 'secondo_livello/interno_chiesa.png', 'Stanza'),
 (10, 'secondo_livello/porta_sigillata1.png', 'Stanza'),
 (11, 'secondo_livello/magazzino_chiesa.png', 'Stanza'),
 (12, 'secondo_livello/cripta_teschio.png', 'Stanza'),
@@ -21,7 +21,7 @@ INSERT INTO IMMAGINI (id_img, percorso_file, tipo_risorsa) VALUES
 (15, 'terzo_livello/stanza_principale_tempio.png', 'Stanza'),
 (16, 'terzo_livello/libreria_tempio.png', 'Stanza'),
 (17, 'terzo_livello/stanza_destra.png', 'Stanza'),
-(18, 'terzo_livello/altare.png', 'Stanza'),
+(18, 'terzo_livello/altare.jpg', 'Stanza'),
 (19, 'terzo_livello/stanza_sommo.png', 'Stanza'),
 (20, 'item/chiave_runa_blu.png', 'Item'),
 (21, 'item/chiave_runa_rossa.png', 'Item'),
@@ -32,10 +32,10 @@ INSERT INTO IMMAGINI (id_img, percorso_file, tipo_risorsa) VALUES
 (26, 'item/pozione_salute.png', 'Item'),
 (27, 'item/spada_della_rovina.png', 'Item'),
 (28, 'item/staffa_incantata.png', 'Item'),
-(29, 'item/spada.png', 'Item'),
-(30, 'item/ascia_incantata.png', 'Item'),
-(31, 'item/lancia_oscura.png', 'Item'),
-(32, 'item/arco_di_fuoco.png', 'Item'),
+(29, 'item/Spada.png', 'Item'),
+(30, 'item/AsciaIncantata.png', 'Item'),
+(31, 'item/LanciaOscura.png', 'Item'),
+(32, 'item/ArcoDiFuoco.png', 'Item'),
 (33, 'personaggi/protagonista/even.png', 'Giocatore'),
 (34, 'personaggi/cattivi/soldato_della_guarnigione.png', 'Nemico'),
 (35, 'personaggi/cattivi/inquisitore.png', 'Nemico'),
@@ -44,7 +44,7 @@ INSERT INTO IMMAGINI (id_img, percorso_file, tipo_risorsa) VALUES
 (38, 'personaggi/cattivi/guardiano_del_tempio.png', 'Nemico'),
 (39, 'personaggi/cattivi/accolito.png', 'Nemico'),
 (40, 'personaggi/cattivi/re_stregone_angmar.png', 'Nemico'),
-(41, 'secondo_livello/scalinata_sotterranea.png', 'Stanza');
+(41, 'secondo_livello/scalinata_sotterranea.jpg', 'Stanza');
 
 -- 2. LIVELLO
 INSERT INTO LIVELLO (id_livello, id_img) VALUES
@@ -82,7 +82,7 @@ INSERT INTO ITEM (id_item, nome, descrizione, id_img, utilizzabile_in_scontro, v
 O Sacra e Divina Presenza,
 Tu che sei l''Elemento e il Tutto,
 l''Origine senza tempo e la Fine che consuma,
-Noi Ti invochiamo.
+Noi Ti invociamo.
 
 O Fiamma, O Guida che illumina la Via,
 O Faro che squarcia le tenebre,

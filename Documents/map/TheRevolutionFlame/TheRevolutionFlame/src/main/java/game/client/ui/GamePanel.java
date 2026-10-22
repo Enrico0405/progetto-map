@@ -192,7 +192,14 @@ public class GamePanel extends JPanel {
         txtInputComando.addActionListener(e -> { 
             String testoInserito = txtInputComando.getText().trim();
             if (!testoInserito.isEmpty()) {
-                if (testoInserito.toLowerCase().startsWith("id:")) {
+                String cmdLower = testoInserito.toLowerCase();
+
+                // Intercetta l'apertura manuale dell'inventario
+                if (cmdLower.equals("apri inventario") || cmdLower.equals("inventario") || cmdLower.equals("vedi inventario")) {
+                    mainFrame.apriInventario();
+                }
+
+                if (cmdLower.startsWith("id:")) {
                     mainFrame.inviaAzioneAlServer(testoInserito, "");
                 } else {
                     String[] parti = testoInserito.split(" ", 2); 
@@ -260,7 +267,13 @@ public class GamePanel extends JPanel {
                     MapDialog mapDialog = new MapDialog(mainFrame);
                     mapDialog.mostraMappa(pathMappa);
                 });
+            } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
+                mainFrame.apriInventario();
             } else {
+                // Aggiunge la voce 'apri inventario' se il server restituisce il testo di help
+                if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
+                    msg = msg.replace("vedi mappa", "vedi mappa\n  - apri inventario          : Visualizza la finestra dell'inventario");
+                }
                 aggiungiTestoAllaConsole(msg);
             }
         }
