@@ -15,62 +15,51 @@ public class DatabaseManager {
     private static final String PASS = "";
 
     private Connection connection;
-// ==========================================
-// 1. CONNESSIONE E SCRIPT CONFIGURAZIONE
-// ==========================================
 
-public void connetti() throws SQLException {
-    if (connection == null || connection.isClosed()) {
-        connection = DriverManager.getConnection(DB_URL, USER, PASS);
+    // ==========================================
+    // 1. CONNESSIONE E SCRIPT CONFIGURAZIONE
+    // ==========================================
+
+    public void connetti() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+        }
+    }
+
+    public void disconnetti() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Esegue uno script SQL presente nei resources (es. "/db/schema.sql" o "/db/init_data.sql").
+     */
+    public void eseguiScriptConfigurazione(String resourcePath) throws SQLException {
+        InputStream is = getClass().getResourceAsStream(resourcePath);
+        if (is == null) {
+            throw new IllegalArgumentException("File SQL non trovato nel classpath: " + resourcePath);
+        }
         
-        // Verifica se il database è vuoto; se non esistono tabelle, esegue gli script
-        if (!tabellaEsiste("GIOCATORE")) {
-            inizializzaDatabase();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        String sqlScript = reader.lines().collect(Collectors.joining("\n"));
+
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sqlScript);
         }
     }
-}
 
-public void disconnetti() {
-    try {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
+    /**
+     * Inizializza il database eseguendo in sequenza lo schema e i dati iniziali.
+     */
+    public void inizializzaDatabase() throws SQLException {
+        eseguiScriptConfigurazione("/db/schema.sql");
+        eseguiScriptConfigurazione("/db/init_data.sql");
     }
-}
-
-/**
- * Esegue uno script SQL del classpath usando il comando nativo H2 RUNSCRIPT.
- */
-public void eseguiScriptConfigurazione(String resourcePath) throws SQLException {
-    // Rimuove lo slash iniziale per il prefisso classpath: di H2
-    String relativePath = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
-    String sql = "RUNSCRIPT FROM 'classpath:" + relativePath + "'";
-    
-    try (Statement stmt = connection.createStatement()) {
-        stmt.execute(sql);
-    }
-}
-
-/**
- * Inizializza il database eseguendo lo schema e i dati iniziali.
- */
-public void inizializzaDatabase() throws SQLException {
-    eseguiScriptConfigurazione("db/schema.sql");
-    eseguiScriptConfigurazione("db/init_data.sql");
-}
-
-/**
- * Helper per verificare se una tabella esiste già nel DB.
- */
-private boolean tabellaEsiste(String nomeTabella) {
-    try (ResultSet rs = connection.getMetaData().getTables(null, null, nomeTabella.toUpperCase(), null)) {
-        return rs.next();
-    } catch (SQLException e) {
-        return false;
-    }
-}
 
     // ==========================================
     // 2. CREAZIONE NUOVA PARTITA

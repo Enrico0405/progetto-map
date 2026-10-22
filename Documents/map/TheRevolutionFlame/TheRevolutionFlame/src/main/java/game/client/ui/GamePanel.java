@@ -1,9 +1,13 @@
 package game.client.ui;
 
 import game.common.dto.GameResponse;
-import javax.swing.*;
-import java.awt.*;
 import game.client.util.ImageCacheManager;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import java.awt.*;
 
 public class GamePanel extends JPanel {
 
@@ -22,120 +26,166 @@ public class GamePanel extends JPanel {
     private Image imgGiocatoreCorrente = null;
     private boolean inCombattimentoAttivo = false;
 
+    // Palette Colori Retro Style
+    private static final Color SFONDO_RETRO = new Color(20, 20, 28);
+    private static final Color CORNICE_ESTERNA = new Color(180, 140, 60);
+    private static final Color CORNICE_INTERNA = new Color(40, 40, 55);
+    private static final Color TESTO_VERDE = new Color(50, 220, 100);
+
     public GamePanel(MainFrame mainFrame) {
-        this.setLayout(new BorderLayout());
+        this.setLayout(new BorderLayout(5, 5));
+        this.setBackground(SFONDO_RETRO);
+        this.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
         this.mainFrame = mainFrame;
 
-        // Carica lo sprite del tuo personaggio
-        ImageIcon iconaGiocatore = ImageCacheManager.getIcona("personaggi/eroe.png");
-        if (iconaGiocatore != null) {
-            this.imgGiocatoreCorrente = iconaGiocatore.getImage();
-        }
+        // Carica lo sprite del personaggio provando i vari percorsi possibili
+        this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
 
-        // Area grafica centrale
+        // ---------------------------------------------------------------------
+        // 1. AREA GRAFICA CENTRALE (PIXEL ART & LAYERED RENDERING)
+        // ---------------------------------------------------------------------
         JPanel pnlVisual = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
-                
-                // 1. STRATO SFONDO (Stanza o Mappa)
+
+                // Attiva la resa Pixel Art nitida (evita che Swing sfochi le immagini ingrandite)
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+                int w = getWidth();
+                int h = getHeight();
+
+                // STRATO 1: SFONDO (Mappa / Stanza)
                 if (imgSfondoCorrente != null) {
-                    g2d.drawImage(imgSfondoCorrente, 0, 0, getWidth(), getHeight(), this);
+                    g2d.drawImage(imgSfondoCorrente, 0, 0, w, h, this);
                 } else {
                     g2d.setColor(Color.BLACK);
-                    g2d.fillRect(0, 0, getWidth(), getHeight());
+                    g2d.fillRect(0, 0, w, h);
                 }
-                
-                // 2. STRATO COMBATTIMENTO (Giocatore a sinistra, Nemico a destra)
-                if (inCombattimentoAttivo) {
-                    int pnlW = getWidth();
-                    int pnlH = getHeight();
-                    int hSprite = (int) (pnlH * 0.60);
 
-                    // Giocatore
+                // STRATO 2: PERSONAGGI IN COMBATTIMENTO
+                if (inCombattimentoAttivo) {
+                    // Scala l'altezza separatamente per bilanciare le armi svettanti dell'antagonista
+                    int hSpriteGiocatore = (int) (h * 0.48); // Dimensione bilanciata per il protagonista
+                    int hSpriteNemico = (int) (h * 0.68);    // Dimensione maggiorata per far entrare l'asta dell'arma
+
+                    // Giocatore a sinistra
                     if (imgGiocatoreCorrente != null) {
                         int wOrig = imgGiocatoreCorrente.getWidth(null);
                         int hOrig = imgGiocatoreCorrente.getHeight(null);
                         if (hOrig > 0) {
-                            int wGiocatore = (wOrig * hSprite) / hOrig;
-                            int xGiocatore = (int) (pnlW * 0.10);
-                            int yGiocatore = pnlH - hSprite - 20;
-                            g2d.drawImage(imgGiocatoreCorrente, xGiocatore, yGiocatore, wGiocatore, hSprite, this);
+                            int wGiocatore = (wOrig * hSpriteGiocatore) / hOrig;
+                            int xGiocatore = (int) (w * 0.08);
+                            int yGiocatore = h - hSpriteGiocatore - 15;
+                            g2d.drawImage(imgGiocatoreCorrente, xGiocatore, yGiocatore, wGiocatore, hSpriteGiocatore, this);
                         }
                     }
 
-                    // Nemico
+                    // Nemico a destra
                     if (imgNemicoCorrente != null) {
                         int wOrig = imgNemicoCorrente.getWidth(null);
                         int hOrig = imgNemicoCorrente.getHeight(null);
                         if (hOrig > 0) {
-                            int wNemico = (wOrig * hSprite) / hOrig;
-                            int xNemico = pnlW - wNemico - (int) (pnlW * 0.10);
-                            int yNemico = pnlH - hSprite - 20;
-                            g2d.drawImage(imgNemicoCorrente, xNemico, yNemico, wNemico, hSprite, this);
+                            int wNemico = (wOrig * hSpriteNemico) / hOrig;
+                            int xNemico = w - wNemico - (int) (w * 0.08);
+                            int yNemico = h - hSpriteNemico - 15;
+                            g2d.drawImage(imgNemicoCorrente, xNemico, yNemico, wNemico, hSpriteNemico, this);
                         }
                     }
                 }
             }
         };
+
         pnlVisual.setBackground(Color.BLACK);
-        pnlVisual.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 2));
+        pnlVisual.setBorder(new CompoundBorder(
+                new LineBorder(CORNICE_ESTERNA, 2),
+                new BevelBorder(BevelBorder.LOWERED, CORNICE_INTERNA, Color.BLACK)
+        ));
         
         this.add(pnlVisual, BorderLayout.CENTER);
 
-        // Barra di stato a destra
+        // ---------------------------------------------------------------------
+        // 2. PANNELLO LATERALE (STATO OPERATIVO)
+        // ---------------------------------------------------------------------
         JPanel pnlStato = new JPanel();
         pnlStato.setLayout(new BoxLayout(pnlStato, BoxLayout.Y_AXIS)); 
-        pnlStato.setPreferredSize(new Dimension(200, 0));
+        pnlStato.setPreferredSize(new Dimension(210, 0));
+        pnlStato.setBackground(SFONDO_RETRO);
         pnlStato.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY), "Stato Operativo"));
-        pnlStato.setBackground(Color.DARK_GRAY);
+                new LineBorder(CORNICE_ESTERNA, 1), 
+                " STATO EROI ", 
+                0, 0, 
+                new Font("Monospaced", Font.BOLD, 12), 
+                CORNICE_ESTERNA
+        ));
 
         lblSalute = new JLabel("Salute: 100%");
-        lblSalute.setForeground(Color.GREEN);
-        lblSalute.setFont(new Font("Arial", Font.BOLD, 14));
+        lblSalute.setForeground(TESTO_VERDE);
+        lblSalute.setFont(new Font("Monospaced", Font.BOLD, 14));
         
         lblArmaEquipaggiata = new JLabel("Arma: NESSUNA");
-        lblArmaEquipaggiata.setForeground(Color.WHITE);
+        lblArmaEquipaggiata.setForeground(Color.CYAN);
+        lblArmaEquipaggiata.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         txtInventarioScorte = new JTextArea(10, 15);
         txtInventarioScorte.setEditable(false);
-        txtInventarioScorte.setBackground(Color.DARK_GRAY);
+        txtInventarioScorte.setBackground(new Color(12, 12, 18));
         txtInventarioScorte.setForeground(Color.LIGHT_GRAY);
-        txtInventarioScorte.setText("Scorte:\n- vuoto");
+        txtInventarioScorte.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        txtInventarioScorte.setText("Scorte:\n- Vuoto");
+        txtInventarioScorte.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+
+        JScrollPane scrollInventario = new JScrollPane(txtInventarioScorte);
+        scrollInventario.setBorder(new LineBorder(CORNICE_INTERNA, 1));
 
         pnlStato.add(Box.createRigidArea(new Dimension(0, 10)));
         pnlStato.add(lblSalute);
         pnlStato.add(Box.createRigidArea(new Dimension(0, 10)));
         pnlStato.add(lblArmaEquipaggiata);
-        pnlStato.add(Box.createRigidArea(new Dimension(0, 20)));
-        pnlStato.add(new JScrollPane(txtInventarioScorte));
+        pnlStato.add(Box.createRigidArea(new Dimension(0, 15)));
+        pnlStato.add(scrollInventario);
         
         this.add(pnlStato, BorderLayout.EAST);
 
-        // Terminale comandi in basso
-        JPanel pnlTerminale = new JPanel(new BorderLayout());
+        // ---------------------------------------------------------------------
+        // 3. TERMINALE COMANDI IN BASSO (RETRO CONSOLE)
+        // ---------------------------------------------------------------------
+        JPanel pnlTerminale = new JPanel(new BorderLayout(0, 4));
+        pnlTerminale.setBackground(SFONDO_RETRO);
+        pnlTerminale.setBorder(BorderFactory.createTitledBorder(
+                new LineBorder(CORNICE_ESTERNA, 1), 
+                " DIARIO & COMANDI ", 
+                0, 0, 
+                new Font("Monospaced", Font.BOLD, 12), 
+                CORNICE_ESTERNA
+        ));
         
         txtLogConsole = new JTextPane();
         txtLogConsole.setEditable(false);
-        txtLogConsole.setBackground(Color.BLACK);
+        txtLogConsole.setBackground(new Color(10, 10, 15));
         txtLogConsole.setForeground(Color.WHITE);
+        txtLogConsole.setFont(new Font("Monospaced", Font.PLAIN, 13));
         
         JScrollPane scrollConsole = new JScrollPane(txtLogConsole);
-        scrollConsole.setPreferredSize(new Dimension(0, 150));
+        scrollConsole.setPreferredSize(new Dimension(0, 140));
+        scrollConsole.setBorder(new LineBorder(CORNICE_INTERNA, 1));
         
         txtInputComando = new JTextField();
         txtInputComando.setBackground(Color.BLACK);
-        txtInputComando.setForeground(Color.GREEN);
-        txtInputComando.setFont(new Font("Monospaced", Font.BOLD, 16));
-        txtInputComando.setCaretColor(Color.GREEN);
-        txtInputComando.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
-        txtInputComando.setPreferredSize(new Dimension(0, 40));
+        txtInputComando.setForeground(TESTO_VERDE);
+        txtInputComando.setFont(new Font("Monospaced", Font.BOLD, 15));
+        txtInputComando.setCaretColor(TESTO_VERDE);
+        txtInputComando.setBorder(new CompoundBorder(
+                new LineBorder(TESTO_VERDE, 1),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+        ));
+        txtInputComando.setPreferredSize(new Dimension(0, 36));
         
         txtInputComando.addActionListener(e -> { 
             String testoInserito = txtInputComando.getText().trim();
-            if(!testoInserito.isEmpty()){
+            if (!testoInserito.isEmpty()) {
                 if (testoInserito.toLowerCase().startsWith("id:")) {
                     mainFrame.inviaAzioneAlServer(testoInserito, "");
                 } else {
@@ -154,6 +204,29 @@ public class GamePanel extends JPanel {
         this.add(pnlTerminale, BorderLayout.SOUTH);
     }
 
+    /**
+     * Tenta di caricare lo sprite dell'eroe provando diversi percorsi di fallback
+     */
+    private Image caricaSpriteGiocatore(String pathCustom) {
+        String[] percorsi = {
+            pathCustom,
+            "personaggi/protagonista/Even.png",
+            "personaggi/eroe.png",
+            "personaggi/protagonista/eroe.png",
+            "personaggi/protagonista/Even.PNG"
+        };
+
+        for (String p : percorsi) {
+            if (p != null && !p.trim().isEmpty()) {
+                ImageIcon icona = ImageCacheManager.getIcona(p);
+                if (icona != null && icona.getImage() != null) {
+                    return icona.getImage();
+                }
+            }
+        }
+        return null;
+    }
+
     public void renderizzaStato(GameResponse response) {
         if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
             aggiungiTestoAllaConsole(response.getMessaggio());
@@ -166,10 +239,10 @@ public class GamePanel extends JPanel {
         } else if (response.getPlayerHp() <= 40) {
             lblSalute.setForeground(Color.YELLOW);
         } else {
-            lblSalute.setForeground(Color.GREEN);
+            lblSalute.setForeground(TESTO_VERDE);
         }
 
-        // 1. SFONDO
+        // 1. CARICAMENTO SFONDO
         String percorsoSfondo = response.getMappaPngPath();
         if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
             percorsoSfondo = response.getStanzaSfondoPath();
@@ -182,8 +255,14 @@ public class GamePanel extends JPanel {
             this.imgSfondoCorrente = null;
         }
 
-        // 2. NEMICO
+        // 2. CARICAMENTO GIOCATORE E NEMICO
         this.inCombattimentoAttivo = response.isInCombattimento();
+        
+        // Assicura il caricamento dello sprite del tuo eroe
+        if (this.imgGiocatoreCorrente == null) {
+            this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
+        }
+
         if (inCombattimentoAttivo && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
             ImageIcon iconaNemico = ImageCacheManager.getIcona(response.getEnemySpritePath());
             this.imgNemicoCorrente = (iconaNemico != null) ? iconaNemico.getImage() : null;
@@ -207,8 +286,6 @@ public class GamePanel extends JPanel {
                 aggiungiTestoAllaConsole("\n*** GAME OVER ***");
             }
         }
-        
-        txtInputComando.setText("");
     }
 
     private void aggiungiTestoAllaConsole(String testo) {
@@ -222,7 +299,7 @@ public class GamePanel extends JPanel {
     }
     
     public void mostraSchermataIniziale(){
-        aggiungiTestoAllaConsole("Avvio del terminale...");
+        aggiungiTestoAllaConsole("Avvio del terminale operativo...");
         aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
         
         txtInputComando.setEnabled(true);
