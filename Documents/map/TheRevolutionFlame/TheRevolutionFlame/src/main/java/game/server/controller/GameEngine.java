@@ -147,6 +147,9 @@ public class GameEngine {
 
         registry.add(new CommandRule("^help$|^aiuto$", 
             (idSess, state, m) -> generaManualeComandi(), false));
+        // Visualizzazione Mappa del Livello Corrente
+      registry.add(new CommandRule("^(?:vedi\\s+)?mappa$", 
+     (idSess, state, m) -> gestisciVediMappa(state), true));
     }
 
     // =========================================================================
@@ -235,7 +238,20 @@ public class GameEngine {
     // =========================================================================
     // METODI AUSILIARI DI GESTIONE LOGICA
     // =========================================================================
+   private String gestisciVediMappa(GameState state) {
+    if (state == null || state.getPlayer() == null || state.getStanzaAttuale() == null) {
+        return "Impossibile recuperare la mappa: nessuna partita o stanza attiva.";
+    }
 
+    int idLivelloCorrente = state.getStanzaAttuale().getIdLivello();
+    String percorsoMappa = dbManager.getPercorsoMappaLivello(idLivelloCorrente);
+
+    if (percorsoMappa == null || percorsoMappa.isBlank()) {
+        return "Nessuna mappa trovata per il livello " + idLivelloCorrente + ".";
+    }
+
+    return "MAPPA_LIVELLO:" + percorsoMappa;
+}
     private String gestisciCercaItem(GameState state, String parametro) {
         if (state == null || state.getPlayer() == null) {
             return "Nessuna partita attiva.";
@@ -400,6 +416,7 @@ public class GameEngine {
                
                ESPLORAZIONE:
                  - vai a nord/sud/est/ovest  : Muove il personaggio nella direzione
+                 - vedi mappa                : Visualizza la mappa del livello corrente
                =======================================================""";
     }
 }

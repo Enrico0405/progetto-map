@@ -467,6 +467,30 @@ private boolean tabellaEsiste(String nomeTabella) {
     // 5. UTILITY E AUTENTICAZIONE
     // ==========================================
 
+    
+    /**
+ * Recupera il percorso dell'immagine della mappa di un livello a partire dal suo id_livello.
+ *
+ * @param idLivello ID del livello (es. 1, 2, 3)
+ * @return String percorso del file della mappa, oppure null se non trovato
+ */
+public String getPercorsoMappaLivello(int idLivello) {
+    String query = "SELECT img.percorso_file " +
+                   "FROM LIVELLO l " +
+                   "JOIN IMMAGINI img ON l.id_img = img.id_img " +
+                   "WHERE l.id_livello = ?";
+    try (PreparedStatement pstm = connection.prepareStatement(query)) {
+        pstm.setInt(1, idLivello);
+        try (ResultSet rs = pstm.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("percorso_file");
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
     public boolean esisteSalvataggio(int idGiocatore) {
         String query = "SELECT COUNT(*) FROM PARTITA WHERE id_giocatore = ?";
         try (PreparedStatement pstm = connection.prepareStatement(query)) {

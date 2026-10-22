@@ -1,6 +1,7 @@
 package game.server.network;
 
 import game.server.controller.GameEngine;
+import game.server.db.DatabaseManager;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -23,6 +24,7 @@ public class GameServer {
 
     private final SessionManager sessionManager;
     private final GameEngine gameEngine;
+    private final DatabaseManager dbManager;
 
     // Contatore thread-safe per la generazione progressiva degli ID sessione
     private final AtomicInteger sessionCounter = new AtomicInteger(1);
@@ -30,10 +32,11 @@ public class GameServer {
     /**
      * Costruttore principale con dependency injection dei componenti già inizializzati.
      */
-    public GameServer(int port, SessionManager sessionManager, GameEngine gameEngine) {
+    public GameServer(int port, SessionManager sessionManager, GameEngine gameEngine, DatabaseManager dbManager) {
         this.port = port;
         this.sessionManager = sessionManager;
         this.gameEngine = gameEngine;
+        this.dbManager = dbManager;
         this.threadPool = Executors.newCachedThreadPool();
     }
 
@@ -61,8 +64,8 @@ public class GameServer {
                             + clientSocket.getRemoteSocketAddress() 
                             + " -> Assegnato ID Sessione: " + idSessione);
 
-                    // Crea il gestore multithread per la connessione del client
-                    ClientHandler clientHandler = new ClientHandler(clientSocket, gameEngine, sessionManager, idSessione);
+                    // Crea il gestore multithread per la connessione del client passando anche dbManager
+                    ClientHandler clientHandler = new ClientHandler(clientSocket, gameEngine, sessionManager, dbManager, idSessione);
 
                     // Esegue il ClientHandler in un thread dedicato del ThreadPool
                     threadPool.execute(clientHandler);
