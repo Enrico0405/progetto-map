@@ -40,16 +40,14 @@ public class MapDialog extends JDialog {
      */
     public void mostraMappa(String immaginePath) {
         if (immaginePath != null && !immaginePath.isEmpty()) {
-            
-            /* SCOMMENTA QUESTO BLOCCO QUANDO L'IMAGE CACHE MANAGER SARA' PRONTO
-             * ImageIcon icona = ImageCacheManager.getIcona(immaginePath);
-             * lblImmagineMappa.setIcon(icona);
-             * lblImmagineMappa.setText(""); // Rimuove eventuali testi
-             */
-             
-             // placeholder temporaneo per testare senza il file immagine
-             lblImmagineMappa.setText("[ MAPPA CARICATA: " + immaginePath + " ]");
-             lblImmagineMappa.setForeground(Color.WHITE);
+            ImageIcon icona = game.client.util.ImageCacheManager.getIcona(immaginePath);
+            if (icona != null && icona.getImage() != null) {
+                lblImmagineMappa.setIcon(icona);
+                lblImmagineMappa.setText(""); // Rimuove il testo segnaposto
+            } else {
+                lblImmagineMappa.setText("[ MAPPA CARICATA: " + immaginePath + " ]");
+                lblImmagineMappa.setForeground(Color.WHITE);
+            }
         }
         
         // Rende visibile la finestrella in sovrimpressione

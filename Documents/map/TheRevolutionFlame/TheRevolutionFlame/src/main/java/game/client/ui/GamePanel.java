@@ -50,7 +50,7 @@ public class GamePanel extends JPanel {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
 
-                // Attiva la resa Pixel Art nitida (evita che Swing sfochi le immagini ingrandite)
+                // Attiva la resa Pixel Art nitida
                 g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
@@ -67,9 +67,8 @@ public class GamePanel extends JPanel {
 
                 // STRATO 2: PERSONAGGI IN COMBATTIMENTO
                 if (inCombattimentoAttivo) {
-                    // Scala l'altezza separatamente per bilanciare le armi svettanti dell'antagonista
-                    int hSpriteGiocatore = (int) (h * 0.48); // Dimensione bilanciata per il protagonista
-                    int hSpriteNemico = (int) (h * 0.68);    // Dimensione maggiorata per far entrare l'asta dell'arma
+                    int hSpriteGiocatore = (int) (h * 0.48);
+                    int hSpriteNemico = (int) (h * 0.68);
 
                     // Giocatore a sinistra
                     if (imgGiocatoreCorrente != null) {
@@ -204,9 +203,6 @@ public class GamePanel extends JPanel {
         this.add(pnlTerminale, BorderLayout.SOUTH);
     }
 
-    /**
-     * Tenta di caricare lo sprite dell'eroe provando diversi percorsi di fallback
-     */
     private Image caricaSpriteGiocatore(String pathCustom) {
         String[] percorsi = {
             pathCustom,
@@ -229,7 +225,18 @@ public class GamePanel extends JPanel {
 
     public void renderizzaStato(GameResponse response) {
         if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
-            aggiungiTestoAllaConsole(response.getMessaggio());
+            String msg = response.getMessaggio();
+
+            // Intercetta il messaggio della mappa per aprire la finestra pop-up MapDialog
+            if (msg.startsWith("MAPPA_LIVELLO:")) {
+                String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
+                SwingUtilities.invokeLater(() -> {
+                    MapDialog mapDialog = new MapDialog(mainFrame);
+                    mapDialog.mostraMappa(pathMappa);
+                });
+            } else {
+                aggiungiTestoAllaConsole(msg);
+            }
         }
 
         lblSalute.setText("Salute: " + response.getPlayerHp() + "/" + response.getPlayerMaxHp());
@@ -242,10 +249,10 @@ public class GamePanel extends JPanel {
             lblSalute.setForeground(TESTO_VERDE);
         }
 
-        // 1. CARICAMENTO SFONDO
-        String percorsoSfondo = response.getMappaPngPath();
+        // 1. CARICAMENTO SFONDO (Priorità allo sfondo della stanza attiva)
+        String percorsoSfondo = response.getStanzaSfondoPath();
         if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
-            percorsoSfondo = response.getStanzaSfondoPath();
+            percorsoSfondo = response.getMappaPngPath();
         }
         
         if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
