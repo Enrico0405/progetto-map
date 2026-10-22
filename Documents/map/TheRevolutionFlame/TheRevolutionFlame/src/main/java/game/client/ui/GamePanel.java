@@ -42,6 +42,9 @@ public class GamePanel extends JPanel {
         this.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
         this.mainFrame = mainFrame;
 
+        // Carica la copertina iniziale per il menu principale
+        this.imgSfondoCorrente = caricaImmagineCopertina();
+
         // Carica lo sprite del personaggio provando i vari percorsi possibili
         this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
 
@@ -61,7 +64,7 @@ public class GamePanel extends JPanel {
                 int w = getWidth();
                 int h = getHeight();
 
-                // STRATO 1: SFONDO (Mappa / Stanza)
+                // STRATO 1: SFONDO (Copertina / Mappa / Stanza)
                 if (imgSfondoCorrente != null) {
                     g2d.drawImage(imgSfondoCorrente, 0, 0, w, h, this);
                 } else {
@@ -207,6 +210,25 @@ public class GamePanel extends JPanel {
         this.add(pnlTerminale, BorderLayout.SOUTH);
     }
 
+    /**
+     * Carica l'immagine di copertina per lo sfondo del menu principale
+     */
+    private Image caricaImmagineCopertina() {
+        String[] percorsiCopertina = {
+            "sfondo menu principale/sfondo_menu_principale.jpg",
+            "sfondo menu principale/sfondo_menu_principale.png",
+            "images/copertina.png"
+        };
+
+        for (String p : percorsiCopertina) {
+            ImageIcon icona = ImageCacheManager.getIcona(p);
+            if (icona != null && icona.getImage() != null) {
+                return icona.getImage();
+            }
+        }
+        return null;
+    }
+
     private Image caricaSpriteGiocatore(String pathCustom) {
         String[] percorsi = {
             pathCustom,
@@ -262,8 +284,6 @@ public class GamePanel extends JPanel {
         if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
             ImageIcon iconaSfondo = ImageCacheManager.getIcona(percorsoSfondo);
             this.imgSfondoCorrente = (iconaSfondo != null) ? iconaSfondo.getImage() : null;
-        } else {
-            this.imgSfondoCorrente = null;
         }
 
         // 2. CARICAMENTO GIOCATORE E NEMICO
@@ -360,9 +380,14 @@ public class GamePanel extends JPanel {
     
     public void mostraSchermataIniziale() {
         aggiungiTestoAllaConsole("Avvio del terminale operativo...");
-        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
+        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
+        aggiungiTestoAllaConsole("digita si se hai già giocato in precedenza ,no se e' la prima volta");
         
-        // Traccia del menu iniziale (puoi impostarla se hai una canzone dedicata nel menu)
+        // Imposta l'immagine di copertina e aggiorna la grafica del pannello
+        this.imgSfondoCorrente = caricaImmagineCopertina();
+        this.repaint();
+
+        // Traccia del menu iniziale
         tracciaMusicaleAttuale = "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
         SoundManager.playMusic(tracciaMusicaleAttuale);
 
