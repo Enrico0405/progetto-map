@@ -2,6 +2,7 @@ package game.client.ui;
 
 import game.common.dto.GameResponse;
 import game.client.util.ImageCacheManager;
+import game.client.util.SoundManager;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -25,6 +26,9 @@ public class GamePanel extends JPanel {
     private Image imgNemicoCorrente = null;
     private Image imgGiocatoreCorrente = null;
     private boolean inCombattimentoAttivo = false;
+
+    // Tracciamento della traccia musicale attualmente in riproduzione
+    private String tracciaMusicaleAttuale = "";
 
     // Palette Colori Retro Style
     private static final Color SFONDO_RETRO = new Color(20, 20, 28);
@@ -265,7 +269,6 @@ public class GamePanel extends JPanel {
         // 2. CARICAMENTO GIOCATORE E NEMICO
         this.inCombattimentoAttivo = response.isInCombattimento();
         
-        // Assicura il caricamento dello sprite del tuo eroe
         if (this.imgGiocatoreCorrente == null) {
             this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
         }
@@ -276,6 +279,9 @@ public class GamePanel extends JPanel {
         } else {
             this.imgNemicoCorrente = null;
         }
+
+        // 3. SELEZIONE E RIPRODUZIONE DELLA COLONNA SONORA DINAMICA
+        gestisciMusicaAmbiente(response, percorsoSfondo);
 
         this.repaint();
 
@@ -295,6 +301,53 @@ public class GamePanel extends JPanel {
         }
     }
 
+    /**
+     * Mappa ed esegue il cambio di traccia audio in base alla posizione e allo stato di gioco
+     */
+    private void gestisciMusicaAmbiente(GameResponse response, String percorsoSfondo) {
+        String nuovaTraccia = "";
+
+        if (response.isVittoria()) {
+            nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+        } else if (response.isGameOver()) {
+            SoundManager.stopMusic();
+            tracciaMusicaleAttuale = "";
+            return;
+        } else if (response.isInCombattimento()) {
+            String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
+            
+            if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
+            } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
+            } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
+            } else {
+                nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
+            }
+        } else {
+            // Modalità Esplorazione: determina la traccia in base allo sfondo/livello
+            String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
+
+            if (path.contains("bosco")) {
+                nuovaTraccia = "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
+            } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
+                nuovaTraccia = "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
+            } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
+                nuovaTraccia = "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
+            } else {
+                // Sfondo del villaggio o inizio livello 1
+                nuovaTraccia = "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+            }
+        }
+
+        // Avvia la musica solo se è cambiata rispetto a quella attualmente in riproduzione
+        if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
+            tracciaMusicaleAttuale = nuovaTraccia;
+            SoundManager.playMusic(nuovaTraccia);
+        }
+    }
+
     private void aggiungiTestoAllaConsole(String testo) {
         try {
             javax.swing.text.Document doc = txtLogConsole.getDocument();
@@ -305,10 +358,14 @@ public class GamePanel extends JPanel {
         }
     }
     
-    public void mostraSchermataIniziale(){
-        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
-        // Fai partire la colonna sonora (inserisci il percorso del tuo file MP3)
-        game.client.util.SoundManager.playMusic("colonne_sonore/menu/tema.mp3");
+    public void mostraSchermataIniziale() {
+        aggiungiTestoAllaConsole("Avvio del terminale operativo...");
+        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
+        
+        // Traccia del menu iniziale (puoi impostarla se hai una canzone dedicata nel menu)
+        tracciaMusicaleAttuale = "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+        SoundManager.playMusic(tracciaMusicaleAttuale);
+
         txtInputComando.setEnabled(true);
         txtInputComando.requestFocusInWindow(); 
     }
