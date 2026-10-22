@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package game.client.ui;
 
 import javax.swing.*;
@@ -11,46 +7,51 @@ public class MapDialog extends JDialog {
     private JLabel lblImmagineMappa;
 
     /**
-     * costruttore: crea lo scheletro della finestra della mappa
+     * Costruttore: crea lo scheletro della finestra della mappa
      */
     public MapDialog(JFrame parent) {
-        // richiama il costruttore di JDialog: 
-        // (finestra padre, titolo della finestra, modale)
-        super(parent, "Mappa di Gioco", false); 
+        super(parent, "Mappa del Regno", false); 
         
-        //impostazioni base della finestra
-        this.setSize(600, 400); // grandezza iniziale
-        this.setLocationRelativeTo(parent); // la centra rispetto al gioco principale
+        // Impostazioni della finestra
+        this.setSize(800, 560); // Dimensione proporzionata per la mappa
+        this.setLocationRelativeTo(parent); // La centra rispetto al gioco
         this.setLayout(new BorderLayout());
-       
-        // chisura della mappa
         this.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE); 
 
-        // inizializzo JLabel che contiene l'immagine
+        // Inizializza JLabel per contenere l'immagine
         lblImmagineMappa = new JLabel("", SwingConstants.CENTER);
         lblImmagineMappa.setBackground(Color.BLACK);
-        lblImmagineMappa.setOpaque(true); // Serve per far vedere lo sfondo nero
+        lblImmagineMappa.setOpaque(true);
         
-        // Aggiunta con barra di scorrimento
-        this.add(new JScrollPane(lblImmagineMappa), BorderLayout.CENTER);
+        this.add(lblImmagineMappa, BorderLayout.CENTER);
     }
 
     /**
-     * Carica e mostra mappa
+     * Carica e ridimensiona la mappa per adattarla alla finestra
      */
     public void mostraMappa(String immaginePath) {
         if (immaginePath != null && !immaginePath.isEmpty()) {
             ImageIcon icona = game.client.util.ImageCacheManager.getIcona(immaginePath);
+            
             if (icona != null && icona.getImage() != null) {
-                lblImmagineMappa.setIcon(icona);
-                lblImmagineMappa.setText(""); // Rimuove il testo segnaposto
+                // Calcola le dimensioni interne disponibili
+                int targetWidth = 780;
+                int targetHeight = 520;
+
+                // Ridimensiona l'immagine mantenendo l'alta qualità
+                Image imgOriginale = icona.getImage();
+                Image imgScalata = imgOriginale.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+
+                lblImmagineMappa.setIcon(new ImageIcon(imgScalata));
+                lblImmagineMappa.setText(""); 
             } else {
+                lblImmagineMappa.setIcon(null);
                 lblImmagineMappa.setText("[ MAPPA CARICATA: " + immaginePath + " ]");
                 lblImmagineMappa.setForeground(Color.WHITE);
             }
         }
         
-        // Rende visibile la finestrella in sovrimpressione
+        // Mostra la finestra centrata
         this.setVisible(true);
     }
 }

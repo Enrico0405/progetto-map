@@ -306,9 +306,9 @@ public class GamePanel extends JPanel {
     }
     
     public void mostraSchermataIniziale(){
-        aggiungiTestoAllaConsole("Avvio del terminale operativo...");
-        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame. Attesa connessione...");
-        
+        aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
+        // Fai partire la colonna sonora (inserisci il percorso del tuo file MP3)
+        game.client.util.SoundManager.playMusic("colonne_sonore/menu/tema.mp3");
         txtInputComando.setEnabled(true);
         txtInputComando.requestFocusInWindow(); 
     }

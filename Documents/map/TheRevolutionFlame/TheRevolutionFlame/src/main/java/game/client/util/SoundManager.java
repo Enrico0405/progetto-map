@@ -3,6 +3,8 @@ package game.client.util;
 import javazoom.jl.player.Player;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileInputStream;
 
 public class SoundManager {
 
@@ -11,8 +13,36 @@ public class SoundManager {
     private static volatile boolean isLooping = false;
 
     /**
+     * Tenta il caricamento flessibile del file audio da diverse sorgenti
+     */
+    private static InputStream caricaStreamAudio(String resourcePath) {
+        if (resourcePath == null || resourcePath.isBlank()) return null;
+
+        String pathConSlash = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        String pathSenzaSlash = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+
+        // 1. Prova tramite ClassLoader di sistema
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathSenzaSlash);
+        if (is != null) return is;
+
+        // 2. Prova tramite il ClassLoader della classe SoundManager
+        is = SoundManager.class.getResourceAsStream(pathConSlash);
+        if (is != null) return is;
+
+        // 3. Prova come file fisico nel File System (es. cartella data/ o risorse nella radice del progetto)
+        try {
+            File fileFisico = new File(pathSenzaSlash);
+            if (fileFisico.exists()) {
+                return new FileInputStream(fileFisico);
+            }
+        } catch (Exception ignored) {}
+
+        return null;
+    }
+
+    /**
      * Riproduce una traccia MP3 di sottofondo in loop.
-     * Esempio: SoundManager.playMusic("/colonne_sonore/menu/tema.mp3");
+     * Esempio: SoundManager.playMusic("colonne_sonore/menu/tema.mp3");
      */
     public static synchronized void playMusic(String resourcePath) {
         stopMusic();
@@ -20,21 +50,23 @@ public class SoundManager {
         isLooping = true;
         musicThread = new Thread(() -> {
             while (isLooping) {
-                try (InputStream is = SoundManager.class.getResourceAsStream(resourcePath)) {
+                try (InputStream is = caricaStreamAudio(resourcePath)) {
                     if (is == null) {
-                        System.err.println("File MP3 non trovato: " + resourcePath);
+                        System.err.println("[SoundManager] Impossibile trovare il file MP3: " + resourcePath);
                         break;
                     }
                     BufferedInputStream bis = new BufferedInputStream(is);
                     musicPlayer = new Player(bis);
                     musicPlayer.play();
                 } catch (Exception e) {
-                    System.err.println("Errore riproduzione musica MP3: " + e.getMessage());
+                    if (isLooping) {
+                        System.err.println("[SoundManager] Errore riproduzione musica: " + e.getMessage());
+                    }
                     break;
                 }
             }
         });
-        musicThread.setDaemon(true); // Non blocca la chiusura dell'app
+        musicThread.setDaemon(true);
         musicThread.start();
     }
 
@@ -44,7 +76,9 @@ public class SoundManager {
     public static synchronized void stopMusic() {
         isLooping = false;
         if (musicPlayer != null) {
-            musicPlayer.close();
+            try {
+                musicPlayer.close();
+            } catch (Exception ignored) {}
             musicPlayer = null;
         }
         if (musicThread != null) {
@@ -58,16 +92,16 @@ public class SoundManager {
      */
     public static void playEffect(String resourcePath) {
         new Thread(() -> {
-            try (InputStream is = SoundManager.class.getResourceAsStream(resourcePath)) {
+            try (InputStream is = caricaStreamAudio(resourcePath)) {
                 if (is == null) {
-                    System.err.println("Effetto sonoro MP3 non trovato: " + resourcePath);
+                    System.err.println("[SoundManager] Effetto sonoro non trovato: " + resourcePath);
                     return;
                 }
                 BufferedInputStream bis = new BufferedInputStream(is);
                 Player effectPlayer = new Player(bis);
                 effectPlayer.play();
             } catch (Exception e) {
-                System.err.println("Errore effetto sonoro: " + e.getMessage());
+                System.err.println("[SoundManager] Errore effetto sonoro: " + e.getMessage());
             }
         }).start();
     }
