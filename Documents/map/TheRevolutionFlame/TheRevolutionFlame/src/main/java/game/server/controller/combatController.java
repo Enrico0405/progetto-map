@@ -150,8 +150,8 @@ public class combatController {
     }
 
     /**
-     * Fase 1: Il giocatore tira sui dadi per la fuga. Se riesce,
-     * il controller annota internamente che questa sessione è in attesa di scegliere la via.
+     * Fase 1: Il giocatore richiede la fuga. Se ci sono vie libere, 
+     * il disingaggio riesce sempre al 100%.
      */
     public String avviaTentativoFuga(GameState gameState) {
         if (!gameState.isInCombattimento()) {
@@ -184,20 +184,11 @@ public class combatController {
             return sb.toString();
         }
 
-        double sogliaFuga = (nemico != null && nemico.getTipo() == TipoNemico.BOSS) ? 0.25 : 0.50;
-
-        if (random.nextDouble() < sogliaFuga) {
-            sessioniInAttesaFuga.add(id);
-            return "Sei riuscito a disingaggiarti! Dove vuoi fuggire? Vie disponibili: "
-                    + String.join(", ", vieAperte)
-                    + "\n(Usa il comando per muoverti nella direzione desiderata)";
-        } else {
-            StringBuilder sb = new StringBuilder("Tentativo di fuga fallito!\n");
-            if (nemico != null && nemico.isVivo()) {
-                sb.append(eseguiTurnoNemico(player, nemico, gameState));
-            }
-            return sb.toString();
-        }
+        // Fuga garantita al 100% se esistono vie aperte
+        sessioniInAttesaFuga.add(id);
+        return "Sei riuscito a disingaggiarti! Dove vuoi fuggire? Vie disponibili: "
+                + String.join(", ", vieAperte)
+                + "\n(Usa il comando per muoverti nella direzione desiderata)";
     }
 
     /**

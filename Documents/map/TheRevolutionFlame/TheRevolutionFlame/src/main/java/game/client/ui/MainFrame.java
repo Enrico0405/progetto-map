@@ -121,7 +121,7 @@ public class MainFrame extends JFrame {
         if (connesso) 
         {
             System.out.println("Connessione al server (porta 12345) stabilita con successo.");
-            this.gamePanel.renderizzaStato(new game.common.dto.GameResponse(">>> Connessione stabilita con successo!"));
+            //this.gamePanel.renderizzaStato(new game.common.dto.GameResponse(">>> Connessione stabilita con successo!"));
         } else 
         {
             System.err.println("ERRORE: Impossibile connettersi al server. Assicurati che il MainServer sia in esecuzione.");

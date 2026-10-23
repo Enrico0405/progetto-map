@@ -391,8 +391,8 @@ public class GamePanel extends JPanel {
         }
     }
     
-    public void mostraSchermataIniziale() {
-        aggiungiTestoAllaConsole("Avvio del terminale operativo...");
+    public void mostraSchermataIniziale() 
+    {
         aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
         aggiungiTestoAllaConsole("digita si se hai già giocato in precedenza ,no se e' la prima volta");
         

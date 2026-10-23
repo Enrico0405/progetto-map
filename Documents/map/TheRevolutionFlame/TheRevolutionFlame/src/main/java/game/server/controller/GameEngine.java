@@ -3,18 +3,20 @@ package game.server.controller;
 import game.server.db.DatabaseManager;
 import game.server.model.GameState;
 import game.server.model.Item;
+import game.server.model.Stanza;
 import game.server.model.TipoItem;
 import game.server.network.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GameEngine {
 
     // =========================================================================
-    // ESTRUTTURE INTERNE PER IL REGISTRO DEI COMANDI
+    // STRUTTURE INTERNE PER IL REGISTRO DEI COMANDI
     // =========================================================================
 
     @FunctionalInterface
@@ -95,7 +97,7 @@ public class GameEngine {
         // 2. COMANDI DI GIOCO E INVENTARIO (In-Game)
         // =========================================================================
 
-        // Ricerca oggetti per TipoItem o per Nome (sfrutta Stream & Lambda in InventoryController)
+        // Ricerca oggetti per TipoItem o per Nome
         registry.add(new CommandRule("^cerca\\s+(.+)$", 
             (idSess, state, m) -> gestisciCercaItem(state, m.group(1)), true));
 
@@ -103,7 +105,11 @@ public class GameEngine {
         registry.add(new CommandRule("^(GA|GC)[a-zA-Z0-9]+$", 
             (idSess, state, m) -> inventoryController.gestisciEquipaggiamentoDaComando(state, m.group(0)), true));
 
-        // Esamina dettagli oggetto
+        // Esamina la stanza attuale e gli oggetti a terra (registrato prima di esamina cella)
+        registry.add(new CommandRule("^(?:esamina|guarda)\\s+stanza$|^esamina$", 
+            (idSess, state, m) -> gestisciEsaminaStanza(state), true));
+
+        // Esamina dettagli singolo oggetto in uno slot
         registry.add(new CommandRule("^esamina\\s+([GSgs])([a-zA-Z0-9]+)$", 
             (idSess, state, m) -> gestisciEsaminaOggetto(state, m.group(1).toUpperCase().charAt(0), m.group(2)), true));
 
@@ -144,9 +150,10 @@ public class GameEngine {
 
         registry.add(new CommandRule("^help$|^aiuto$", 
             (idSess, state, m) -> generaManualeComandi(), false));
+
         // Visualizzazione Mappa del Livello Corrente
-      registry.add(new CommandRule("^(?:vedi\\s+)?mappa$", 
-     (idSess, state, m) -> gestisciVediMappa(state), true));
+        registry.add(new CommandRule("^(?:vedi\\s+)?mappa$", 
+            (idSess, state, m) -> gestisciVediMappa(state), true));
     }
 
     // =========================================================================
@@ -177,20 +184,53 @@ public class GameEngine {
     // =========================================================================
     // METODI AUSILIARI DI GESTIONE LOGICA
     // =========================================================================
-   private String gestisciVediMappa(GameState state) {
-    if (state == null || state.getPlayer() == null || state.getStanzaAttuale() == null) {
-        return "Impossibile recuperare la mappa: nessuna partita o stanza attiva.";
+
+    private String gestisciEsaminaStanza(GameState state) {
+        if (state == null || state.getStanzaAttuale() == null) {
+            return "Nessuna stanza attiva da esaminare.";
+        }
+
+        Stanza stanza = state.getStanzaAttuale();
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- STANZA: ").append(stanza.getNome().toUpperCase()).append(" ---\n");
+        sb.append(stanza.getDescrizione()).append("\n\n");
+
+        List<Item> oggetti = stanza.getOggettiNellaStanza();
+        if (oggetti == null || oggetti.isEmpty()) {
+            sb.append("Non ci sono oggetti a terra in questa stanza.");
+        } else {
+            sb.append("OGGETTI PRESENTI A TERRA:\n");
+            for (int i = 0; i < oggetti.size(); i++) {
+                Item item = oggetti.get(i);
+                char riga = (char) ('a' + (i / 4));
+                int colonna = (i % 4) + 1;
+                String codSlot = "S" + riga + colonna;
+
+                sb.append("  - Slot [").append(codSlot).append("]: ").append(item.getNome())
+                  .append(" (Tipo: ").append(item.getTipo())
+                  .append(", Effetto: ").append(item.getValoreEffetto()).append(")\n");
+            }
+            sb.append("\n(Usa 'sposta Sa1 in Ga1' per raccogliere l'oggetto nello slot desiderato)");
+        }
+
+        return sb.toString();
     }
 
-    int idLivelloCorrente = state.getStanzaAttuale().getIdLivello();
-    String percorsoMappa = dbManager.getPercorsoMappaLivello(idLivelloCorrente);
+    private String gestisciVediMappa(GameState state) {
+        if (state == null || state.getPlayer() == null || state.getStanzaAttuale() == null) {
+            return "Impossibile recuperare la mappa: nessuna partita o stanza attiva.";
+        }
 
-    if (percorsoMappa == null || percorsoMappa.isBlank()) {
-        return "Nessuna mappa trovata per il livello " + idLivelloCorrente + ".";
+        int idLivelloCorrente = state.getStanzaAttuale().getIdLivello();
+        String percorsoMappa = dbManager.getPercorsoMappaLivello(idLivelloCorrente);
+
+        if (percorsoMappa == null || percorsoMappa.isBlank()) {
+            return "Nessuna mappa trovata per il livello " + idLivelloCorrente + ".";
+        }
+
+        return "MAPPA_LIVELLO:" + percorsoMappa;
     }
 
-    return "MAPPA_LIVELLO:" + percorsoMappa;
-}
     private String gestisciCercaItem(GameState state, String parametro) {
         if (state == null || state.getPlayer() == null) {
             return "Nessuna partita attiva.";
@@ -199,7 +239,6 @@ public class GameEngine {
         String query = parametro.trim().toUpperCase();
         TipoItem tipoTrovato = null;
 
-        // Riconoscimento del TipoItem (arma, pozione, pergamena, collezionabile)
         for (TipoItem t : TipoItem.values()) {
             if (t.name().equalsIgnoreCase(query) || 
                 (query.startsWith("ARMA") && t == TipoItem.ARMA) ||
@@ -355,6 +394,7 @@ public class GameEngine {
                
                ESPLORAZIONE:
                  - vai a nord/sud/est/ovest  : Muove il personaggio nella direzione
+                 - esamina stanza            : Mostra descrizione della stanza e oggetti a terra
                  - vedi mappa                : Visualizza la mappa del livello corrente
                =======================================================""";
     }
