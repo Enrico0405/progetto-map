@@ -23,6 +23,24 @@ public class DatabaseManager {
     public void connetti() throws SQLException {
         if (connection == null || connection.isClosed()) {
             connection = DriverManager.getConnection(DB_URL, USER, PASS);
+
+            // Verifica automatica: se la tabella GIOCATORE non esiste, inizializza il DB
+            if (!tabellaEsiste("GIOCATORE")) {
+                System.out.println("[DB] Prima esecuzione o DB vuoto rilevato: avvio inizializzazione schema...");
+                inizializzaDatabase();
+                System.out.println("[DB] Schema e dati iniziali caricati con successo.");
+            }
+        }
+    }
+
+    /**
+     * Verifica se una determinata tabella esiste all'interno del database.
+     */
+    private boolean tabellaEsiste(String nomeTabella) {
+        try (ResultSet rs = connection.getMetaData().getTables(null, null, nomeTabella.toUpperCase(), null)) {
+            return rs.next();
+        } catch (SQLException e) {
+            return false;
         }
     }
 
@@ -456,30 +474,30 @@ public class DatabaseManager {
     // 5. UTILITY E AUTENTICAZIONE
     // ==========================================
 
-    
     /**
- * Recupera il percorso dell'immagine della mappa di un livello a partire dal suo id_livello.
- *
- * @param idLivello ID del livello (es. 1, 2, 3)
- * @return String percorso del file della mappa, oppure null se non trovato
- */
-public String getPercorsoMappaLivello(int idLivello) {
-    String query = "SELECT img.percorso_file " +
-                   "FROM LIVELLO l " +
-                   "JOIN IMMAGINI img ON l.id_img = img.id_img " +
-                   "WHERE l.id_livello = ?";
-    try (PreparedStatement pstm = connection.prepareStatement(query)) {
-        pstm.setInt(1, idLivello);
-        try (ResultSet rs = pstm.executeQuery()) {
-            if (rs.next()) {
-                return rs.getString("percorso_file");
+     * Recupera il percorso dell'immagine della mappa di un livello a partire dal suo id_livello.
+     *
+     * @param idLivello ID del livello (es. 1, 2, 3)
+     * @return String percorso del file della mappa, oppure null se non trovato
+     */
+    public String getPercorsoMappaLivello(int idLivello) {
+        String query = "SELECT img.percorso_file " +
+                       "FROM LIVELLO l " +
+                       "JOIN IMMAGINI img ON l.id_img = img.id_img " +
+                       "WHERE l.id_livello = ?";
+        try (PreparedStatement pstm = connection.prepareStatement(query)) {
+            pstm.setInt(1, idLivello);
+            try (ResultSet rs = pstm.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("percorso_file");
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
+
     public boolean esisteSalvataggio(int idGiocatore) {
         String query = "SELECT COUNT(*) FROM PARTITA WHERE id_giocatore = ?";
         try (PreparedStatement pstm = connection.prepareStatement(query)) {
