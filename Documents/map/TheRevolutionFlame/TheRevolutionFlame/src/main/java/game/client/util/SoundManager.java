@@ -10,7 +10,7 @@ public class SoundManager {
 
     private static Player musicPlayer;
     private static Thread musicThread;
-    private static volatile boolean isLooping = false;
+    private static String correnteTracciaPath = "";
 
     /**
      * Tenta il caricamento flessibile del file audio da diverse sorgenti
@@ -29,7 +29,7 @@ public class SoundManager {
         is = SoundManager.class.getResourceAsStream(pathConSlash);
         if (is != null) return is;
 
-        // 3. Prova come file fisico nel File System (es. cartella data/ o risorse nella radice del progetto)
+        // 3. Prova come file fisico nel File System
         try {
             File fileFisico = new File(pathSenzaSlash);
             if (fileFisico.exists()) {
@@ -41,68 +41,87 @@ public class SoundManager {
     }
 
     /**
-     * Riproduce una traccia MP3 di sottofondo in loop.
-     * Esempio: SoundManager.playMusic("colonne_sonore/menu/tema.mp3");
+     * Riproduce una traccia MP3 di sottofondo in loop continuo.
+     * Termina tassativamente la traccia precedente ed evita riavvii se la traccia è già attiva.
      */
     public static synchronized void playMusic(String resourcePath) {
+        if (resourcePath == null || resourcePath.isBlank()) {
+            stopMusic();
+            return;
+        }
+
+        // Se la traccia richiesta è già in riproduzione nel thread attivo, non fare nulla
+        if (resourcePath.equals(correnteTracciaPath) && musicThread != null && musicThread.isAlive()) {
+            return;
+        }
+
+        // 1. Ferma e cancella il riferimento al thread e al player precedente
         stopMusic();
 
-        isLooping = true;
+        correnteTracciaPath = resourcePath;
+
+        // 2. Crea il nuovo thread
         musicThread = new Thread(() -> {
-            while (isLooping) {
+            Thread threadMio = Thread.currentThread();
+
+            // Il ciclo continua SOLO finché 'musicThread' punta a questo specifico thread
+            while (musicThread == threadMio && !threadMio.isInterrupted()) {
                 try (InputStream is = caricaStreamAudio(resourcePath)) {
                     if (is == null) {
                         System.err.println("[SoundManager] Impossibile trovare il file MP3: " + resourcePath);
                         break;
                     }
                     BufferedInputStream bis = new BufferedInputStream(is);
-                    musicPlayer = new Player(bis);
-                    musicPlayer.play();
-                } catch (Exception e) {
-                    if (isLooping) {
-                        System.err.println("[SoundManager] Errore riproduzione musica: " + e.getMessage());
+
+                    synchronized (SoundManager.class) {
+                        // Controllo di sicurezza se il thread è stato cambiato durante il caricamento dello stream
+                        if (musicThread != threadMio) break;
+                        musicPlayer = new Player(bis);
                     }
+
+                    musicPlayer.play(); // Chiamata bloccante: si sblocca appena viene chiamato musicPlayer.close()
+
+                } catch (Exception e) {
                     break;
                 }
             }
         });
+
         musicThread.setDaemon(true);
         musicThread.start();
     }
 
     /**
-     * Ferma la musica di sottofondo.
+     * Ferma la musica di sottofondo e distrugge il player e il thread attivi.
      */
     public static synchronized void stopMusic() {
-        isLooping = false;
+        correnteTracciaPath = "";
+
         if (musicPlayer != null) {
             try {
-                musicPlayer.close();
+                musicPlayer.close(); // Sblocca la play() nel thread
             } catch (Exception ignored) {}
             musicPlayer = null;
         }
+
         if (musicThread != null) {
-            musicThread.interrupt();
-            musicThread = null;
+            Thread t = musicThread;
+            musicThread = null; // Annulla il riferimento: il vecchio thread uscirà dal ciclo immediatamente
+            t.interrupt();
         }
     }
 
     /**
-     * Riproduce un effetto sonoro MP3 una singola volta.
+     * Riproduce un effetto sonoro MP3 una singola volta senza interrompere la musica di sottofondo.
      */
     public static void playEffect(String resourcePath) {
         new Thread(() -> {
             try (InputStream is = caricaStreamAudio(resourcePath)) {
-                if (is == null) {
-                    System.err.println("[SoundManager] Effetto sonoro non trovato: " + resourcePath);
-                    return;
-                }
+                if (is == null) return;
                 BufferedInputStream bis = new BufferedInputStream(is);
                 Player effectPlayer = new Player(bis);
                 effectPlayer.play();
-            } catch (Exception e) {
-                System.err.println("[SoundManager] Errore effetto sonoro: " + e.getMessage());
-            }
+            } catch (Exception ignored) {}
         }).start();
     }
 }

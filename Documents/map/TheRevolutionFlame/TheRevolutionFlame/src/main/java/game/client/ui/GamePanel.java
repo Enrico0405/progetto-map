@@ -45,7 +45,7 @@ public class GamePanel extends JPanel {
         // Carica la copertina iniziale per il menu principale
         this.imgSfondoCorrente = caricaImmagineCopertina();
 
-        // Carica lo sprite del personaggio provando i vari percorsi possibili
+        // Carica lo sprite del personaggio
         this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
 
         // ---------------------------------------------------------------------
@@ -217,9 +217,6 @@ public class GamePanel extends JPanel {
         this.add(pnlTerminale, BorderLayout.SOUTH);
     }
 
-    /**
-     * Carica l'immagine di copertina per lo sfondo del menu principale
-     */
     private Image caricaImmagineCopertina() {
         String[] percorsiCopertina = {
             "sfondo menu principale/sfondo_menu_principale.jpg",
@@ -260,7 +257,6 @@ public class GamePanel extends JPanel {
         if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
             String msg = response.getMessaggio();
 
-            // Intercetta il messaggio della mappa per aprire la finestra pop-up MapDialog
             if (msg.startsWith("MAPPA_LIVELLO:")) {
                 String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
                 SwingUtilities.invokeLater(() -> {
@@ -270,7 +266,6 @@ public class GamePanel extends JPanel {
             } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
                 mainFrame.apriInventario();
             } else {
-                // Aggiunge la voce 'apri inventario' se il server restituisce il testo di help
                 if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
                     msg = msg.replace("vedi mappa", "vedi mappa\n  - apri inventario          : Visualizza la finestra dell'inventario");
                 }
@@ -288,7 +283,7 @@ public class GamePanel extends JPanel {
             lblSalute.setForeground(TESTO_VERDE);
         }
 
-        // 1. CARICAMENTO SFONDO (Priorità allo sfondo della stanza attiva)
+        // 1. CARICAMENTO SFONDO
         String percorsoSfondo = response.getStanzaSfondoPath();
         if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
             percorsoSfondo = response.getMappaPngPath();
@@ -358,8 +353,8 @@ public class GamePanel extends JPanel {
             } else {
                 nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
             }
-        } else {
-            // Modalità Esplorazione: determina la traccia in base allo sfondo/livello
+        } else if (response.getNomeStanza() != null && !response.getNomeStanza().isBlank()) {
+            // Modalità Esplorazione: si attiva SOLO quando il giocatore si trova in una stanza di gioco valida
             String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
 
             if (path.contains("bosco")) {
@@ -374,7 +369,7 @@ public class GamePanel extends JPanel {
             }
         }
 
-        // Avvia la musica solo se è cambiata rispetto a quella attualmente in riproduzione
+        // Avvia la nuova musica solo se è stata determinata ed è diversa da quella in riproduzione
         if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
             tracciaMusicaleAttuale = nuovaTraccia;
             SoundManager.playMusic(nuovaTraccia);
@@ -400,8 +395,8 @@ public class GamePanel extends JPanel {
         this.imgSfondoCorrente = caricaImmagineCopertina();
         this.repaint();
 
-        // Traccia del menu iniziale
-        tracciaMusicaleAttuale = "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+        // Traccia univoca per il menu principale
+        tracciaMusicaleAttuale = "colonne_sonore/menu/menu_principale.mp3";
         SoundManager.playMusic(tracciaMusicaleAttuale);
 
         txtInputComando.setEnabled(true);
