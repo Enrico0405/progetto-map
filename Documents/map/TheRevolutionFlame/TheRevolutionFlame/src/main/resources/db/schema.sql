@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS ITEM (
     id_img INT,
     utilizzabile_in_scontro BOOLEAN DEFAULT FALSE,
     valore_effetto INT DEFAULT 0,
-    target_effetto VARCHAR(50) CHECK (target_effetto IN ('SALUTE_GIOCATORE', 'DANNO_ARMA', 'nessuno')),
+    target_effetto VARCHAR(50) CHECK (target_effetto IN ('SALUTE_GIOCATORE', 'POTENZIAMENTO_ARMA', 'nessuno')),
     tipo VARCHAR(30) NOT NULL,
     FOREIGN KEY (id_img) REFERENCES IMMAGINI(id_img) ON DELETE SET NULL
 );
