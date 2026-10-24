@@ -21,11 +21,28 @@ public class DatabaseManager {
     // ==========================================
 
     public void connetti() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+    if (connection == null || connection.isClosed()) {
+        connection = DriverManager.getConnection(DB_URL, USER, PASS);
+        
+        // Verifica se il database è vuoto (controllando se esiste la tabella GIOCATORE)
+        if (!tabellaEsiste("GIOCATORE")) {
+            inizializzaDatabase();
+            System.out.println("[DB] Database inizializzato automaticamente con schema e dati iniziali.");
         }
     }
+}
 
+// Metodo di supporto per verificare l'esistenza di una tabella
+private boolean tabellaEsiste(String nomeTabella) {
+    try {
+        DatabaseMetaData meta = connection.getMetaData();
+        try (ResultSet rs = meta.getTables(null, null, nomeTabella.toUpperCase(), new String[]{"TABLE"})) {
+            return rs.next();
+        }
+    } catch (SQLException e) {
+        return false;
+    }
+}
     public void disconnetti() {
         try {
             if (connection != null && !connection.isClosed()) {
