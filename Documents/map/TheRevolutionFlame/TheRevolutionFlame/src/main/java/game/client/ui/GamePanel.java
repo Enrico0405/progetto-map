@@ -14,6 +14,7 @@ public class GamePanel extends JPanel {
 
     private JTextPane txtLogConsole;
     private JTextField txtInputComando;
+    private boolean eraInCombattimento = false;
     
     // Componenti di stato
     private JLabel lblSalute;
@@ -332,49 +333,75 @@ public class GamePanel extends JPanel {
     /**
      * Mappa ed esegue il cambio di traccia audio in base alla posizione e allo stato di gioco
      */
-    private void gestisciMusicaAmbiente(GameResponse response, String percorsoSfondo) {
-        String nuovaTraccia = "";
+   private void gestisciMusicaAmbiente(GameResponse response, String percorsoSfondo) {
+    String nuovaTraccia = "";
+    String messaggioServer = (response.getMessaggio() != null) ? response.getMessaggio().toLowerCase() : "";
 
-        if (response.isVittoria()) {
-            nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
-        } else if (response.isGameOver()) {
-            SoundManager.stopMusic();
-            tracciaMusicaleAttuale = "";
-            return;
-        } else if (response.isInCombattimento()) {
-            String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
-            
-            if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
-                nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
-            } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
-                nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
-            } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
-                nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
-            } else {
-                nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
-            }
-        } else if (response.getNomeStanza() != null && !response.getNomeStanza().isBlank()) {
-            // Modalità Esplorazione: si attiva SOLO quando il giocatore si trova in una stanza di gioco valida
-            String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
-
-            if (path.contains("bosco")) {
-                nuovaTraccia = "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
-            } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
-                nuovaTraccia = "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
-            } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
-                nuovaTraccia = "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
-            } else {
-                // Sfondo del villaggio o inizio livello 1
-                nuovaTraccia = "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
-            }
+    // 1. Vittoria finale di tutto il gioco o Game Over
+    if (response.isVittoria()) {
+        nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+    } else if (response.isGameOver()) {
+        SoundManager.stopMusic();
+        tracciaMusicaleAttuale = "";
+        eraInCombattimento = false;
+        return;
+    } else if (response.isInCombattimento()) {
+        // COMBATTIMENTO IN CORSO
+        eraInCombattimento = true;
+        
+        String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
+        
+        if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
+            nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
+        } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
+            nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
+        } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
+            nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
+        } else {
+            nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
         }
+    } else {
+        // ESPLORAZIONE: Controlla se siamo appena usciti da un combattimento
+        if (eraInCombattimento) {
+            eraInCombattimento = false; // Reset dello stato
 
-        // Avvia la nuova musica solo se è stata determinata ed è diversa da quella in riproduzione
-        if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
-            tracciaMusicaleAttuale = nuovaTraccia;
-            SoundManager.playMusic(nuovaTraccia);
+            // Se siamo usciti dal combattimento FUGGENDO, NON far partire la vittoria!
+            if (messaggioServer.contains("fuggito") || messaggioServer.contains("fuga") || messaggioServer.contains("scappato")) {
+                // Imposta la musica della stanza di destinazione
+                nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
+            } else {
+                // Scontro vinto regolarmente!
+                nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+            }
+        } else {
+            // Normale esplorazione
+            nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
         }
     }
+
+    // Avvia la musica solo se è diversa da quella attualmente in riproduzione
+    if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
+        tracciaMusicaleAttuale = nuovaTraccia;
+        SoundManager.playMusic(nuovaTraccia);
+    }
+}
+
+/**
+ * Metodo helper per recuperare la musica di sottofondo della stanza
+ */
+private String recuperaMusicaStanza(String percorsoSfondo) {
+    String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
+
+    if (path.contains("bosco")) {
+        return "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
+    } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
+        return "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
+    } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
+        return "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
+    } else {
+        return "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+    }
+}
 
     private void aggiungiTestoAllaConsole(String testo) {
         try {
@@ -396,7 +423,7 @@ public class GamePanel extends JPanel {
         this.repaint();
 
         // Traccia univoca per il menu principale
-        tracciaMusicaleAttuale = "colonne_sonore/menu/menu_principale.mp3";
+        tracciaMusicaleAttuale = "colonne_sonore/menu/canzone_menu_principale.mp3";
         SoundManager.playMusic(tracciaMusicaleAttuale);
 
         txtInputComando.setEnabled(true);

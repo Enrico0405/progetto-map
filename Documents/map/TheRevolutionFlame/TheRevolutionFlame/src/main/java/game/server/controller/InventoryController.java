@@ -4,6 +4,7 @@ import game.server.model.GameState;
 import game.server.model.Giocatore;
 import game.server.model.Item;
 import game.server.model.Stanza;
+import game.server.model.TargetEffetto;
 import game.server.model.TipoItem;
 
 import java.util.List;
@@ -260,10 +261,15 @@ public class InventoryController {
             return "L'oggetto equipaggiato non è una pozione utilizzabile!";
         }
 
+        TargetEffetto target = consumabile.getTargetEffetto();
+        if (target == null) {
+            return "Questo consumabile non ha un effetto valido impostato.";
+        }
+
         int valoreEffetto = consumabile.getValoreEffetto();
         String messaggioEsito;
 
-        switch (consumabile.getTargetEffetto()) {
+        switch (target) {
             case SALUTE_GIOCATORE -> {
                 player.modificaHp(valoreEffetto);
                 messaggioEsito = "Hai utilizzato " + consumabile.getNome() + "! Ripristinati " + valoreEffetto + " HP.";

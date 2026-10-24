@@ -129,6 +129,7 @@ INSERT INTO ADIACENZE_STANZA (stanza_partenza, stanza_arrivo, verso_comando) VAL
 (2, 1, 'est'),
 (2, 3, 'nord'),
 (3, 4, 'ovest'),
+(4, 3, 'est'),
 (3, 5, 'est'),
 (3, 1, 'sud'),
 (5, 3, 'ovest'),
