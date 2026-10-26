@@ -21,28 +21,28 @@ public class DatabaseManager {
     // ==========================================
 
     public void connetti() throws SQLException {
-    if (connection == null || connection.isClosed()) {
-        connection = DriverManager.getConnection(DB_URL, USER, PASS);
-        
-        // Verifica se il database è vuoto (controllando se esiste la tabella GIOCATORE)
-        if (!tabellaEsiste("GIOCATORE")) {
-            inizializzaDatabase();
-            System.out.println("[DB] Database inizializzato automaticamente con schema e dati iniziali.");
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+            
+            // Verifica se il database è vuoto (controllando se esiste la tabella GIOCATORE)
+            if (!tabellaEsiste("GIOCATORE")) {
+                inizializzaDatabase();
+                System.out.println("[DB] Database inizializzato automaticamente con schema e dati iniziali.");
+            }
         }
     }
-}
 
-// Metodo di supporto per verificare l'esistenza di una tabella
-private boolean tabellaEsiste(String nomeTabella) {
-    try {
-        DatabaseMetaData meta = connection.getMetaData();
-        try (ResultSet rs = meta.getTables(null, null, nomeTabella.toUpperCase(), new String[]{"TABLE"})) {
-            return rs.next();
+    private boolean tabellaEsiste(String nomeTabella) {
+        try {
+            DatabaseMetaData meta = connection.getMetaData();
+            try (ResultSet rs = meta.getTables(null, null, nomeTabella.toUpperCase(), new String[]{"TABLE"})) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return false;
         }
-    } catch (SQLException e) {
-        return false;
     }
-}
+
     public void disconnetti() {
         try {
             if (connection != null && !connection.isClosed()) {
@@ -53,9 +53,6 @@ private boolean tabellaEsiste(String nomeTabella) {
         }
     }
 
-    /**
-     * Esegue uno script SQL presente nei resources (es. "/db/schema.sql" o "/db/init_data.sql").
-     */
     public void eseguiScriptConfigurazione(String resourcePath) throws SQLException {
         InputStream is = getClass().getResourceAsStream(resourcePath);
         if (is == null) {
@@ -70,9 +67,6 @@ private boolean tabellaEsiste(String nomeTabella) {
         }
     }
 
-    /**
-     * Inizializza il database eseguendo in sequenza lo schema e i dati iniziali.
-     */
     public void inizializzaDatabase() throws SQLException {
         eseguiScriptConfigurazione("/db/schema.sql");
         eseguiScriptConfigurazione("/db/init_data.sql");
@@ -119,7 +113,7 @@ private boolean tabellaEsiste(String nomeTabella) {
             inizializzaNemiciPartita(idPartita);
             inizializzaStanzePartita(idPartita);
 
-            String updateStanza = "UPDATE GIOCATORE SET id_stanza = 1, hp_attuali = 100 WHERE id_giocatore = ?";
+            String updateStanza = "UPDATE GIOCATORE SET id_stanza = 1, hp_attuali = 100, hp_massimi = 100 WHERE id_giocatore = ?";
             try (PreparedStatement pstm = connection.prepareStatement(updateStanza)) {
                 pstm.setInt(1, idGiocatore);
                 pstm.executeUpdate();
@@ -218,8 +212,15 @@ private boolean tabellaEsiste(String nomeTabella) {
                     Giocatore g = new Giocatore();
                     g.setId(rs.getInt("id_giocatore"));
                     g.setNome(rs.getString("nome"));
-                    g.setHp(rs.getInt("hp_attuali"));
-                    g.setMaxHp(rs.getInt("hp_massimi"));
+                    
+                    int maxHp = rs.getInt("hp_massimi");
+                    if (maxHp <= 0) maxHp = 100;
+                    
+                    int hpAttuali = rs.getInt("hp_attuali");
+                    if (hpAttuali <= 0) hpAttuali = maxHp;
+
+                    g.setMaxHp(maxHp);
+                    g.setHp(hpAttuali);
                     g.setAvatarPath(rs.getString("avatar_path"));
                     return g;
                 }
@@ -400,7 +401,7 @@ private boolean tabellaEsiste(String nomeTabella) {
         String updateGiocatore = "UPDATE GIOCATORE SET hp_attuali = ?, hp_massimi = ?, id_stanza = ? WHERE id_giocatore = ?";
         try (PreparedStatement pstm = connection.prepareStatement(updateGiocatore)) {
             pstm.setInt(1, state.getPlayer().getHp());
-            pstm.setInt(2, state.getPlayer().getMaxHp());
+            pstm.setInt(2, state.getPlayer().getMaxHp() > 0 ? state.getPlayer().getMaxHp() : 100);
             pstm.setInt(3, state.getStanzaAttuale().getId());
             pstm.setInt(4, idGiocatore);
             pstm.executeUpdate();
@@ -473,30 +474,24 @@ private boolean tabellaEsiste(String nomeTabella) {
     // 5. UTILITY E AUTENTICAZIONE
     // ==========================================
 
-    
-    /**
- * Recupera il percorso dell'immagine della mappa di un livello a partire dal suo id_livello.
- *
- * @param idLivello ID del livello (es. 1, 2, 3)
- * @return String percorso del file della mappa, oppure null se non trovato
- */
-public String getPercorsoMappaLivello(int idLivello) {
-    String query = "SELECT img.percorso_file " +
-                   "FROM LIVELLO l " +
-                   "JOIN IMMAGINI img ON l.id_img = img.id_img " +
-                   "WHERE l.id_livello = ?";
-    try (PreparedStatement pstm = connection.prepareStatement(query)) {
-        pstm.setInt(1, idLivello);
-        try (ResultSet rs = pstm.executeQuery()) {
-            if (rs.next()) {
-                return rs.getString("percorso_file");
+    public String getPercorsoMappaLivello(int idLivello) {
+        String query = "SELECT img.percorso_file " +
+                       "FROM LIVELLO l " +
+                       "JOIN IMMAGINI img ON l.id_img = img.id_img " +
+                       "WHERE l.id_livello = ?";
+        try (PreparedStatement pstm = connection.prepareStatement(query)) {
+            pstm.setInt(1, idLivello);
+            try (ResultSet rs = pstm.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("percorso_file");
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
+
     public boolean esisteSalvataggio(int idGiocatore) {
         String query = "SELECT COUNT(*) FROM PARTITA WHERE id_giocatore = ?";
         try (PreparedStatement pstm = connection.prepareStatement(query)) {
@@ -573,6 +568,20 @@ public String getPercorsoMappaLivello(int idLivello) {
         String tipoStr = rs.getString("tipo");
         if (tipoStr != null) {
             item.setTipo(TipoItem.valueOf(tipoStr.toUpperCase()));
+        }
+
+        // Mappatura del TargetEffetto con fallback per POZIONE
+        try {
+            String targetStr = rs.getString("target_effetto");
+            if (targetStr != null && !targetStr.isBlank()) {
+                item.setTargetEffetto(TargetEffetto.valueOf(targetStr.toUpperCase()));
+            } else if (item.getTipo() == TipoItem.POZIONE) {
+                item.setTargetEffetto(TargetEffetto.SALUTE_GIOCATORE);
+            }
+        } catch (Exception e) {
+            if (item.getTipo() == TipoItem.POZIONE) {
+                item.setTargetEffetto(TargetEffetto.SALUTE_GIOCATORE);
+            }
         }
 
         return item;

@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -64,18 +65,31 @@ public class ClientHandler implements Runnable {
 
                 String comandoStr = request.getComandoCompleto();
 
-                // 2. Invocazione della logica di gioco nel GameEngine
-                String messaggioRisposta = gameEngine.processaComando(idSessione, comandoStr);
+                // 2. PROTEZIONE ANTI-CRASH: Esecuzione del comando in blocco isolato
+                try {
+                    // Invocazione della logica di gioco nel GameEngine
+                    String messaggioRisposta = gameEngine.processaComando(idSessione, comandoStr);
 
-                // 3. Recupero dello stato aggiornato in RAM per questa sessione
-                GameState statoCorrente = sessionManager.getSessione(idSessione);
+                    // Recupero dello stato aggiornato in RAM per questa sessione
+                    GameState statoCorrente = sessionManager.getSessione(idSessione);
 
-                // 4. Arricchimento della risposta con lo stato di salute, stanza, blocco, combattimento e INVENTARI
-                GameResponse response = generaRispostaCompleta(messaggioRisposta, statoCorrente);
+                    // Arricchimento della risposta con lo stato di salute, stanza, blocco, combattimento e INVENTARI
+                    GameResponse response = generaRispostaCompleta(messaggioRisposta, statoCorrente);
 
-                // 5. Serializzazione GameResponse -> JSON e invio al client
-                String jsonOutput = objectMapper.writeValueAsString(response);
-                out.println(jsonOutput);
+                    // Serializzazione GameResponse -> JSON e invio al client
+                    String jsonOutput = objectMapper.writeValueAsString(response);
+                    out.println(jsonOutput);
+
+                } catch (Exception e) {
+                    // Cattura qualsiasi errore non gestito durante l'azione evitando il drop della connessione
+                    System.err.println("[ClientHandler] Errore nell'elaborazione del comando '" + comandoStr + "' (Sessione " + idSessione + "): " + e.getMessage());
+                    e.printStackTrace();
+
+                    GameState statoCorrente = sessionManager.getSessione(idSessione);
+                    GameResponse errResp = generaRispostaCompleta("Si è verificato un errore interno durante l'azione. Connessione mantenuta.", statoCorrente);
+                    errResp.setSuccesso(false);
+                    out.println(objectMapper.writeValueAsString(errResp));
+                }
 
                 // Gestione della disconnessione pulita impartita dal comando
                 if ("esci dal gioco".equalsIgnoreCase(comandoStr)) {
@@ -108,9 +122,10 @@ public class ClientHandler implements Runnable {
                     response.setGameOver(true);
                 }
 
-                // Sincronizzazione Inventario Giocatore
+                // Sincronizzazione Inventario Giocatore (con filtro per elementi nulli)
                 if (state.getPlayer().getInventario() != null) {
                     List<ItemDto> invDto = state.getPlayer().getInventario().stream()
+                            .filter(Objects::nonNull)
                             .map(this::mappaItemToDto)
                             .collect(Collectors.toList());
                     response.setInventarioGiocatore(invDto);
@@ -138,6 +153,7 @@ public class ClientHandler implements Runnable {
                 // Sincronizzazione Oggetti Presenti nella Stanza
                 if (state.getStanzaAttuale().getOggettiNellaStanza() != null) {
                     List<ItemDto> stanzaDto = state.getStanzaAttuale().getOggettiNellaStanza().stream()
+                            .filter(Objects::nonNull)
                             .map(this::mappaItemToDto)
                             .collect(Collectors.toList());
                     response.setOggettiStanza(stanzaDto);
