@@ -170,11 +170,31 @@ public class DatabaseManager {
             pstm.executeUpdate();
         }
 
-        String queryItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) " +
-                           "SELECT id_stanza, ?, slot_index, id_item FROM STANZA_ITEM_BASE";
-        try (PreparedStatement pstm = connection.prepareStatement(queryItem)) {
-            pstm.setInt(1, idPartita);
-            pstm.executeUpdate();
+        // Inserimento sicuro degli item iniziali della stanza gestendo il contatore degli slot per ogni stanza
+        String queryBase = "SELECT id_stanza, id_item FROM STANZA_ITEM_BASE";
+        Map<Integer, Integer> slotCounters = new HashMap<>();
+        
+        List<String> insertList = new ArrayList<>();
+        List<Object[]> paramsList = new ArrayList<>();
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(queryBase)) {
+            while (rs.next()) {
+                int idStanza = rs.getInt("id_stanza");
+                int idItem = rs.getInt("id_item");
+                
+                int slotIndex = slotCounters.getOrDefault(idStanza, 0);
+                slotCounters.put(idStanza, slotIndex + 1);
+                
+                String insertItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement pstm = connection.prepareStatement(insertItem)) {
+                    pstm.setInt(1, idStanza);
+                    pstm.setInt(2, idPartita);
+                    pstm.setInt(3, slotIndex);
+                    pstm.setInt(4, idItem);
+                    pstm.executeUpdate();
+                }
+            }
         }
     }
 
