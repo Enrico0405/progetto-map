@@ -120,7 +120,7 @@ public class combatController {
                      .append(" recuperando ").append(item.getValoreEffetto()).append(" HP. ")
                      .append("(HP: ").append(player.getHp()).append("/").append(player.getMaxHp()).append(")\n");
             }
-            case DANNO_ARMA -> {
+            case POTENZIAMENTO_ARMA -> {
                 if (nemico != null && nemico.isVivo()) {
                     nemico.subisciDanno(item.getValoreEffetto());
                     esito.append("Hai usato ").append(item.getNome())

@@ -4,7 +4,6 @@ import game.server.model.GameState;
 import game.server.model.Giocatore;
 import game.server.model.Item;
 import game.server.model.Stanza;
-import game.server.model.TargetEffetto;
 import game.server.model.TipoItem;
 
 import java.util.List;
@@ -12,13 +11,15 @@ import java.util.stream.Collectors;
 
 public class InventoryController {
 
-    // Griglia 3 righe x 4 colonne = 12 slot totali
+    // Impostiamo il numero di colonne per la griglia di Swing (es. 4 colonne per riga)
     private static final int COLS = 4;
-    private static final int ROWS = 3;
-    private static final int CAPACITA_MASSIMA = COLS * ROWS; // 12
 
     /**
      * Esegue lo spostamento di un oggetto tra griglie (Giocatore/Stanza).
+     * @param state Stato attuale del gioco
+     * @param sorgente Es: "Gb2" (Giocatore, riga b, colonna 2) o "Sb2" (Stanza)
+     * @param destinazione Es: "Gc3" o "Sc3"
+     * @return Messaggio di risposta da restituire al client
      */
     public String spostaItem(GameState state, String sorgente, String destinazione) {
         if (sorgente == null || destinazione == null || sorgente.length() < 3 || destinazione.length() < 3) {
@@ -35,64 +36,90 @@ public class InventoryController {
         int idxDestinazione = calcolaIndice(destinazione.substring(1));
 
         if (idxOrigine < 0 || idxDestinazione < 0) {
-            return "Coordinate slot non valide (usare righe a-c e colonne 1-4).";
+            return "Coordinate slot non valide.";
         }
 
         Giocatore player = state.getPlayer();
         Stanza stanza = state.getStanzaAttuale();
 
-        if (player == null || stanza == null) {
-            return "Stato di gioco non valido per lo spostamento.";
-        }
-
         List<Item> listaOrigine = (tipoOrigine == 'G') ? player.getInventario() : stanza.getOggettiNellaStanza();
         List<Item> listaDestinazione = (tipoDestinazione == 'G') ? player.getInventario() : stanza.getOggettiNellaStanza();
 
-        if (idxOrigine >= listaOrigine.size()) {
+        // Controllo validità indice di partenza e presenza effettiva dell'oggetto
+        if (idxOrigine >= listaOrigine.size() || listaOrigine.get(idxOrigine) == null) {
             return "Nessun oggetto presente nello slot di partenza " + sorgente;
         }
 
         Item itemSpostato = listaOrigine.get(idxOrigine);
 
+        // Caso 1: Spostamento/Scambio nello stesso inventario
         if (tipoOrigine == tipoDestinazione) {
             gestisciSpostamentoInterno(listaOrigine, idxOrigine, idxDestinazione);
             return "Spostato " + itemSpostato.getNome() + " in " + destinazione;
         } 
         
+        // Caso 2: Trasferimento tra inventari diversi (G -> S oppure S -> G)
         return gestisciTrasferimento(listaOrigine, listaDestinazione, idxOrigine, idxDestinazione, itemSpostato, tipoOrigine, destinazione);
     }
 
     private void gestisciSpostamentoInterno(List<Item> lista, int idxOrigine, int idxDestinazione) {
-        if (idxDestinazione >= lista.size()) {
-            Item item = lista.remove(idxOrigine);
-            lista.add(item);
-        } else {
-            Item temp = lista.get(idxOrigine);
-            lista.set(idxOrigine, lista.get(idxDestinazione));
-            lista.set(idxDestinazione, temp);
+        // Riempie la lista con null se la destinazione supera la dimensione attuale
+        while (lista.size() <= idxDestinazione) {
+            lista.add(null);
         }
+
+        Item itemDestinazioneEsistente = lista.get(idxDestinazione);
+        
+        // Effettua lo scambio (Swap) esatto tra lo slot di origine e quello di destinazione
+        lista.set(idxDestinazione, lista.get(idxOrigine));
+        lista.set(idxOrigine, itemDestinazioneEsistente);
+        
+        // Pulisce eventuali elementi null superflui in coda alla lista se possibile
+        pulisciCodaNull(lista);
     }
 
     private String gestisciTrasferimento(List<Item> sorgente, List<Item> destinazione, 
                                         int idxOrigine, int idxDestinazione, 
                                         Item itemSpostato, char tipoOrigine, String slotDest) {
-        if (idxDestinazione < destinazione.size()) {
-            sorgente.remove(idxOrigine);
-            Item itemRimpiazzato = destinazione.set(idxDestinazione, itemSpostato);
-            sorgente.add(idxOrigine, itemRimpiazzato);
+        // Riempie la lista di destinazione con null se necessario
+        while (destinazione.size() <= idxDestinazione) {
+            destinazione.add(null);
+        }
+
+        Item itemRimpiazzato = destinazione.get(idxDestinazione);
+        
+        // Posiziona l'oggetto nella destinazione esatta
+        destinazione.set(idxDestinazione, itemSpostato);
+
+        if (itemRimpiazzato != null) {
+            // Se c'era già un oggetto, lo rimette nello slot di origine esatto
+            sorgente.set(idxOrigine, itemRimpiazzato);
             return "Scambiato " + itemSpostato.getNome() + " con " + itemRimpiazzato.getNome();
         } else {
-            if (destinazione.size() >= CAPACITA_MASSIMA) {
-                String bersaglio = (tipoOrigine == 'G') ? "della stanza" : "del giocatore";
-                return "Impossibile inserire: l'inventario " + bersaglio + " è pieno (max " + CAPACITA_MASSIMA + " oggetti).";
-            }
-            sorgente.remove(idxOrigine);
-            destinazione.add(itemSpostato);
+            // Altrimenti libera lo slot di origine
+            sorgente.set(idxOrigine, null);
+            pulisciCodaNull(sorgente);
             String azione = (tipoOrigine == 'G') ? "Lasciato " : "Raccolto ";
             return azione + itemSpostato.getNome() + " nello slot " + slotDest;
         }
     }
 
+    /**
+     * Rimuove i null in eccesso alla fine della lista per mantenere la dimensione pulita.
+     */
+    private void pulisciCodaNull(List<Item> lista) {
+        for (int i = lista.size() - 1; i >= 0; i--) {
+            if (lista.get(i) == null) {
+                lista.remove(i);
+            } else {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Converte "b2" o "2b" -> riga 'b' (1), colonna '2' (1) -> (1 * COLS) + 1 = 5
+     */
     private int calcolaIndice(String coord) {
         try {
             coord = coord.trim();
@@ -107,9 +134,9 @@ public class InventoryController {
                 colonnaNum = Integer.parseInt(coord.substring(0, coord.length() - 1)) - 1;
             }
 
-            int riga = rigaChar - 'a';
+            int riga = rigaChar - 'a'; // 'a' -> 0, 'b' -> 1, 'c' -> 2
 
-            if (riga < 0 || riga >= ROWS || colonnaNum < 0 || colonnaNum >= COLS) {
+            if (riga < 0 || colonnaNum < 0 || colonnaNum >= COLS) {
                 return -1;
             }
 
@@ -118,6 +145,10 @@ public class InventoryController {
             return -1;
         }
     }
+
+    // =========================================================================
+    // METODI DI RICERCA CON LAMBDA EXPRESSIONS & STREAM API
+    // =========================================================================
 
     public List<Item> cercaInInventarioPerTipo(Giocatore player, TipoItem tipo) {
         return player.getInventario().stream()
@@ -133,9 +164,13 @@ public class InventoryController {
 
     public List<Item> cercaInInventarioPerNome(Giocatore player, String nome) {
         return player.getInventario().stream()
-                .filter(item -> item != null && item.getNome() != null && item.getNome().toLowerCase().contains(nome.toLowerCase()))
+                .filter(item -> item != null && item.getNome().toLowerCase().contains(nome.toLowerCase()))
                 .collect(Collectors.toList());
     }
+
+    // =========================================================================
+    // METODI DI EQUIPAGGIAMENTO
+    // =========================================================================
 
     public boolean equipaggiaArma(Giocatore player, String coordinate) {
         if (player == null || coordinate == null) {
@@ -144,7 +179,7 @@ public class InventoryController {
         int index = calcolaIndice(coordinate);
         List<Item> inventario = player.getInventario();
 
-        if (index >= 0 && index < inventario.size()) {
+        if (index >= 0 && index < inventario.size() && inventario.get(index) != null) {
             Item item = inventario.get(index);
             player.setArmaEquipaggiata(item);
             return true;
@@ -159,7 +194,7 @@ public class InventoryController {
         int index = calcolaIndice(coordinate);
         List<Item> inventario = player.getInventario();
 
-        if (index >= 0 && index < inventario.size()) {
+        if (index >= 0 && index < inventario.size() && inventario.get(index) != null) {
             Item item = inventario.get(index);
             player.setConsumabileEquipaggiato(item);
             return true;
@@ -196,17 +231,13 @@ public class InventoryController {
         String coord = comando.substring(2);
         int index = calcolaIndice(coord);
 
-        if (index < 0 || index >= player.getInventario().size()) {
+        if (index < 0 || index >= player.getInventario().size() || player.getInventario().get(index) == null) {
             return "Nessun oggetto trovato nelle coordinate specificate.";
         }
 
         Item item = player.getInventario().get(index);
 
         if (tipoEquip == 'A') {
-            if (item.getTipo() != TipoItem.ARMA) {
-                return "Impossibile equipaggiare: '" + item.getNome() + "' non è un'arma!";
-            }
-
             if (player.getArmaEquipaggiata() == item) {
                 player.setArmaEquipaggiata(null);
                 return "Arma disequipaggiata: " + item.getNome();
@@ -215,10 +246,6 @@ public class InventoryController {
                 return "Equipaggiata arma: " + item.getNome();
             }
         } else {
-            if (item.getTipo() != TipoItem.POZIONE) {
-                return "Impossibile equipaggiare: '" + item.getNome() + "' non è un consumabile!";
-            }
-
             if (player.getConsumabileEquipaggiato() == item) {
                 player.setConsumabileEquipaggiato(null);
                 return "Consumabile disequipaggiato: " + item.getNome();
@@ -249,40 +276,31 @@ public class InventoryController {
             return "L'oggetto equipaggiato non è una pozione utilizzabile!";
         }
 
-        TargetEffetto target = consumabile.getTargetEffetto();
-        // FALLBACK: Se il target letto dal DB è null, imposta di default SALUTE_GIOCATORE
-        if (target == null) {
-            target = TargetEffetto.SALUTE_GIOCATORE;
-        }
-
         int valoreEffetto = consumabile.getValoreEffetto();
         String messaggioEsito;
 
-        if (target == TargetEffetto.SALUTE_GIOCATORE) {
-            int hpPrima = player.getHp();
-            player.modificaHp(valoreEffetto);
-            int hpDopo = player.getHp();
-            int effettivaCura = hpDopo - hpPrima;
-
-            messaggioEsito = "Hai utilizzato " + consumabile.getNome() + "! Ripristinati +" + effettivaCura + " HP (Salute: " + hpDopo + " HP).";
-        } else if (target == TargetEffetto.DANNO_ARMA) {
-            Item arma = player.getArmaEquipaggiata();
-            if (arma == null) {
-                return "Non hai un'arma equipaggiata da potenziare!";
+        switch (consumabile.getTargetEffetto()) {
+            case SALUTE_GIOCATORE -> {
+                player.modificaHp(valoreEffetto);
+                messaggioEsito = "Hai utilizzato " + consumabile.getNome() + "! Ripristinati " + valoreEffetto + " HP.";
             }
-            int nuovoDanno = arma.getValoreEffetto() + valoreEffetto;
-            arma.setValoreEffetto(nuovoDanno);
-            messaggioEsito = "Hai utilizzato " + consumabile.getNome() + "! Il danno di " + arma.getNome() 
-                    + " è aumentato di +" + valoreEffetto + " (Danno totale: " + nuovoDanno + ").";
-        } else {
-            return "Questo oggetto non produce alcun effetto applicabile.";
+            case POTENZIAMENTO_ARMA -> {
+                Item arma = player.getArmaEquipaggiata();
+                if (arma == null) {
+                    return "Non hai un'arma equipaggiata da potenziare!";
+                }
+                int nuovoDanno = arma.getValoreEffetto() + valoreEffetto;
+                arma.setValoreEffetto(nuovoDanno);
+                messaggioEsito = "Hai utilizzato " + consumabile.getNome() + "! Il danno di " + arma.getNome() 
+                        + " è aumentato di +" + valoreEffetto + " (Danno totale: " + nuovoDanno + ").";
+            }
+            default -> {
+                return "Questo oggetto non produce alcun effetto applicabile.";
+            }
         }
 
         player.setConsumabileEquipaggiato(null);
-
-        if (player.getInventario() != null) {
-            player.getInventario().remove(consumabile);
-        }
+        player.rimuoviItem(consumabile);
 
         return messaggioEsito;
     }
