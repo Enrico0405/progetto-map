@@ -162,41 +162,41 @@ public class DatabaseManager {
         }
     }
 
-   private void inizializzaStanzePartita(int idPartita) throws SQLException {
-        // 1. Inserisce le stanze della partita
-        String queryStanze = "INSERT INTO STANZA_PARTITA (id_stanza, id_partita) " +
-                             "SELECT id_stanza, ? FROM STANZA";
-        try (PreparedStatement pstm = connection.prepareStatement(queryStanze)) {
-            pstm.setInt(1, idPartita);
-            pstm.executeUpdate();
-        }
+  private void inizializzaStanzePartita(int idPartita) throws SQLException {
+    // 1. Inserisce le stanze della partita
+    String queryStanze = "INSERT INTO STANZA_PARTITA (id_stanza, id_partita) SELECT id_stanza, ? FROM STANZA";
+    try (PreparedStatement pstm = connection.prepareStatement(queryStanze)) {
+        pstm.setInt(1, idPartita);
+        pstm.executeUpdate();
+    }
 
-        // 2. Legge gli item base e li inserisce uno ad uno con il rispettivo slot calcolato via Java,
-        // evitando qualsiasi problema con le colonne dello script SQL sul disco.
-        String selectBase = "SELECT id_stanza, id_item FROM STANZA_ITEM_BASE";
-        Map<Integer, Integer> slotCounters = new HashMap<>();
+    // 2. Legge SOLO id_stanza e id_item dalla base (senza dipendere da slot_index)
+    String queryBase = "SELECT id_stanza, id_item FROM STANZA_ITEM_BASE";
+    Map<Integer, Integer> slotCounters = new HashMap<>();
 
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(selectBase)) {
-            
-            String insertItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) VALUES (?, ?, ?, ?)";
-            try (PreparedStatement pstmInsert = connection.prepareStatement(insertItem)) {
-                while (rs.next()) {
-                    int idStanza = rs.getInt("id_stanza");
-                    int idItem = rs.getInt("id_item");
+    try (Statement stmt = connection.createStatement();
+         ResultSet rs = stmt.executeQuery(queryBase)) {
+        
+        // Inserisce riga per riga calcolando lo slot progressivo (0, 1, 2...) via Java
+        String insertItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement pstmInsert = connection.prepareStatement(insertItem)) {
+            while (rs.next()) {
+                int idStanza = rs.getInt("id_stanza");
+                int idItem = rs.getInt("id_item");
 
-                    int slotIndex = slotCounters.getOrDefault(idStanza, 0);
-                    slotCounters.put(idStanza, slotIndex + 1);
+                // Calcola lo slot index progressivo per questa stanza
+                int slotIndex = slotCounters.getOrDefault(idStanza, 0);
+                slotCounters.put(idStanza, slotIndex + 1);
 
-                    pstmInsert.setInt(1, idStanza);
-                    pstmInsert.setInt(2, idPartita);
-                    pstmInsert.setInt(3, slotIndex);
-                    pstmInsert.setInt(4, idItem);
-                    pstmInsert.executeUpdate();
-                }
+                pstmInsert.setInt(1, idStanza);
+                pstmInsert.setInt(2, idPartita);
+                pstmInsert.setInt(3, slotIndex);
+                pstmInsert.setInt(4, idItem);
+                pstmInsert.executeUpdate();
             }
         }
     }
+}
 
     // ==========================================
     // 3. CARICAMENTO GAMESTATE
