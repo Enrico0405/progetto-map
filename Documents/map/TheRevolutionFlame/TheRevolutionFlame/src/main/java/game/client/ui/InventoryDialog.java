@@ -115,7 +115,7 @@ public class InventoryDialog extends JDialog {
         DefaultTableModel modelGiocatore = (DefaultTableModel) this.tblInventarioGiocatore.getModel();
         DefaultTableModel modelStanza = (DefaultTableModel) this.tblOggettiStanza.getModel();
 
-        // 1. Pulizia preventiva
+        // 1. Pulizia preventiva di tutte le 12 celle per entrambe le griglie
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 4; c++) {
                 modelGiocatore.setValueAt(null, r, c);
@@ -123,14 +123,15 @@ public class InventoryDialog extends JDialog {
             }
         }
 
-        // 2. Popola la scacchiera del Giocatore (G)
+        // 2. Popola la scacchiera del Giocatore (G) tramite slotIndex diretto
         if (invGiocatore != null) {
-            for (int i = 0; i < invGiocatore.size(); i++) {
-                ItemDto item = invGiocatore.get(i);
+            for (ItemDto item : invGiocatore) {
                 if (item != null) {
-                    int riga = i / 4;
-                    int col = i % 4;
-                    if (riga < 3) {
+                    int slotIndex = item.getSlotIndex();
+                    int riga = slotIndex / 4;
+                    int col = slotIndex % 4;
+
+                    if (riga >= 0 && riga < 3 && col >= 0 && col < 4) {
                         ImageIcon icona = ImageCacheManager.getIcona(item.getImmaginePath());
                         if (icona != null && icona.getImage() != null) {
                             Image img = icona.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
@@ -143,14 +144,15 @@ public class InventoryDialog extends JDialog {
             }
         }
 
-        // 3. Popola la scacchiera della Stanza (S)
+        // 3. Popola la scacchiera della Stanza (S) tramite slotIndex diretto
         if (invStanza != null) {
-            for (int i = 0; i < invStanza.size(); i++) {
-                ItemDto item = invStanza.get(i);
+            for (ItemDto item : invStanza) {
                 if (item != null) {
-                    int riga = i / 4;
-                    int col = i % 4;
-                    if (riga < 3) {
+                    int slotIndex = item.getSlotIndex();
+                    int riga = slotIndex / 4;
+                    int col = slotIndex % 4;
+
+                    if (riga >= 0 && riga < 3 && col >= 0 && col < 4) {
                         ImageIcon icona = ImageCacheManager.getIcona(item.getImmaginePath());
                         if (icona != null && icona.getImage() != null) {
                             Image img = icona.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
@@ -162,6 +164,10 @@ public class InventoryDialog extends JDialog {
                 }
             }
         }
+
+        // 4. Aggiorna la resa grafica delle tabelle
+        this.tblInventarioGiocatore.repaint();
+        this.tblOggettiStanza.repaint();
     }
 
     public void aggiornaEquipaggiamento(String arma, String pozione) {

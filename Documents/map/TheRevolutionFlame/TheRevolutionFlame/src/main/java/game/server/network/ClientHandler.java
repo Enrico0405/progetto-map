@@ -14,9 +14,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Gestore multithread della singola connessione socket con un client.
@@ -122,12 +121,17 @@ public class ClientHandler implements Runnable {
                     response.setGameOver(true);
                 }
 
-                // Sincronizzazione Inventario Giocatore (con filtro per elementi nulli)
+                // Sincronizzazione Inventario Giocatore (con indice di lista come slotIndex)
                 if (state.getPlayer().getInventario() != null) {
-                    List<ItemDto> invDto = state.getPlayer().getInventario().stream()
-                            .filter(Objects::nonNull)
-                            .map(this::mappaItemToDto)
-                            .collect(Collectors.toList());
+                    List<ItemDto> invDto = new ArrayList<>();
+                    List<Item> listaInv = state.getPlayer().getInventario();
+                    for (int i = 0; i < listaInv.size(); i++) {
+                        Item item = listaInv.get(i);
+                        if (item != null) {
+                            ItemDto dto = new ItemDto(item.getNome(), item.getIconaPath(), i);
+                            invDto.add(dto);
+                        }
+                    }
                     response.setInventarioGiocatore(invDto);
                 }
 
@@ -150,12 +154,17 @@ public class ClientHandler implements Runnable {
                 int idLivello = state.getStanzaAttuale().getIdLivello();
                 response.setMappaPngPath(dbManager.getPercorsoMappaLivello(idLivello));
 
-                // Sincronizzazione Oggetti Presenti nella Stanza
+                // Sincronizzazione Oggetti Presenti nella Stanza (con indice di lista come slotIndex)
                 if (state.getStanzaAttuale().getOggettiNellaStanza() != null) {
-                    List<ItemDto> stanzaDto = state.getStanzaAttuale().getOggettiNellaStanza().stream()
-                            .filter(Objects::nonNull)
-                            .map(this::mappaItemToDto)
-                            .collect(Collectors.toList());
+                    List<ItemDto> stanzaDto = new ArrayList<>();
+                    List<Item> listaStanza = state.getStanzaAttuale().getOggettiNellaStanza();
+                    for (int i = 0; i < listaStanza.size(); i++) {
+                        Item item = listaStanza.get(i);
+                        if (item != null) {
+                            ItemDto dto = new ItemDto(item.getNome(), item.getIconaPath(), i);
+                            stanzaDto.add(dto);
+                        }
+                    }
                     response.setOggettiStanza(stanzaDto);
                 }
             }
@@ -170,14 +179,6 @@ public class ClientHandler implements Runnable {
         }
 
         return response;
-    }
-
-    private ItemDto mappaItemToDto(Item item) {
-        if (item == null) return null;
-        ItemDto dto = new ItemDto();
-        dto.setNome(item.getNome());
-        dto.setImmaginePath(item.getIconaPath());
-        return dto;
     }
 
     private void chiudiSocket() {
