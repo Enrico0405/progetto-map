@@ -170,8 +170,8 @@ public class DatabaseManager {
             pstm.executeUpdate();
         }
 
-        String queryItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, id_item) " +
-                           "SELECT id_stanza, ?, id_item FROM STANZA_ITEM_BASE";
+        String queryItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) " +
+                           "SELECT id_stanza, ?, slot_index, id_item FROM STANZA_ITEM_BASE";
         try (PreparedStatement pstm = connection.prepareStatement(queryItem)) {
             pstm.setInt(1, idPartita);
             pstm.executeUpdate();
@@ -263,19 +263,25 @@ public class DatabaseManager {
             }
         }
 
-        String queryItemStanza = "SELECT spi.id_stanza, i.*, img.percorso_file AS icon_path " +
+        String queryItemStanza = "SELECT spi.id_stanza, spi.slot_index, i.*, img.percorso_file AS icon_path " +
                                  "FROM ITEM i " +
                                  "JOIN STANZA_PARTITA_ITEM spi ON i.id_item = spi.id_item " +
                                  "LEFT JOIN IMMAGINI img ON i.id_img = img.id_img " +
-                                 "WHERE spi.id_partita = ?";
+                                 "WHERE spi.id_partita = ? ORDER BY spi.slot_index ASC";
         try (PreparedStatement pstm = connection.prepareStatement(queryItemStanza)) {
             pstm.setInt(1, idPartita);
             try (ResultSet rs = pstm.executeQuery()) {
                 while (rs.next()) {
                     int idStanza = rs.getInt("id_stanza");
+                    int slotIndex = rs.getInt("slot_index");
                     Item item = mappaItem(rs);
                     if (mappa.containsKey(idStanza)) {
-                        mappa.get(idStanza).aggiungiOggetto(item);
+                        Stanza s = mappa.get(idStanza);
+                        List<Item> oggetti = s.getOggettiNellaStanza();
+                        while (oggetti.size() <= slotIndex) {
+                            oggetti.add(null);
+                        }
+                        oggetti.set(slotIndex, item);
                     }
                 }
             }
@@ -354,15 +360,20 @@ public class DatabaseManager {
 
     private List<Item> caricaInventarioPartita(int idPartita) throws SQLException {
         List<Item> inventario = new ArrayList<>();
-        String query = "SELECT i.*, img.percorso_file AS icon_path FROM ITEM i " +
+        String query = "SELECT ip.slot_index, i.*, img.percorso_file AS icon_path FROM ITEM i " +
                        "JOIN ITEM_PARTITA ip ON i.id_item = ip.id_item " +
                        "LEFT JOIN IMMAGINI img ON i.id_img = img.id_img " +
-                       "WHERE ip.id_partita = ?";
+                       "WHERE ip.id_partita = ? ORDER BY ip.slot_index ASC";
         try (PreparedStatement pstm = connection.prepareStatement(query)) {
             pstm.setInt(1, idPartita);
             try (ResultSet rs = pstm.executeQuery()) {
                 while (rs.next()) {
-                    inventario.add(mappaItem(rs));
+                    int slotIndex = rs.getInt("slot_index");
+                    Item item = mappaItem(rs);
+                    while (inventario.size() <= slotIndex) {
+                        inventario.add(null);
+                    }
+                    inventario.set(slotIndex, item);
                 }
             }
         }
@@ -415,13 +426,17 @@ public class DatabaseManager {
             pstm.executeUpdate();
         }
 
-        String insertInv = "INSERT INTO ITEM_PARTITA (id_partita, id_item) VALUES (?, ?)";
+        String insertInv = "INSERT INTO ITEM_PARTITA (id_partita, slot_index, id_item) VALUES (?, ?, ?)";
         try (PreparedStatement pstm = connection.prepareStatement(insertInv)) {
             if (inventario != null) {
-                for (Item item : inventario) {
-                    pstm.setInt(1, idPartita);
-                    pstm.setInt(2, item.getId());
-                    pstm.executeUpdate();
+                for (int i = 0; i < inventario.size(); i++) {
+                    Item item = inventario.get(i);
+                    if (item != null) {
+                        pstm.setInt(1, idPartita);
+                        pstm.setInt(2, i);
+                        pstm.setInt(3, item.getId());
+                        pstm.executeUpdate();
+                    }
                 }
             }
         }
@@ -434,16 +449,21 @@ public class DatabaseManager {
             pstm.executeUpdate();
         }
 
-        String insertStanzaItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, id_item) VALUES (?, ?, ?)";
+        String insertStanzaItem = "INSERT INTO STANZA_PARTITA_ITEM (id_stanza, id_partita, slot_index, id_item) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstm = connection.prepareStatement(insertStanzaItem)) {
             if (mappaStanze != null) {
                 for (Stanza stanza : mappaStanze.values()) {
-                    if (stanza.getOggettiNellaStanza() != null) {
-                        for (Item item : stanza.getOggettiNellaStanza()) {
-                            pstm.setInt(1, stanza.getId());
-                            pstm.setInt(2, idPartita);
-                            pstm.setInt(3, item.getId());
-                            pstm.executeUpdate();
+                    List<Item> oggetti = stanza.getOggettiNellaStanza();
+                    if (oggetti != null) {
+                        for (int i = 0; i < oggetti.size(); i++) {
+                            Item item = oggetti.get(i);
+                            if (item != null) {
+                                pstm.setInt(1, stanza.getId());
+                                pstm.setInt(2, idPartita);
+                                pstm.setInt(3, i);
+                                pstm.setInt(4, item.getId());
+                                pstm.executeUpdate();
+                            }
                         }
                     }
                 }
@@ -570,7 +590,6 @@ public class DatabaseManager {
             item.setTipo(TipoItem.valueOf(tipoStr.toUpperCase()));
         }
 
-        // Mappatura del TargetEffetto con fallback per POZIONE
         try {
             String targetStr = rs.getString("target_effetto");
             if (targetStr != null && !targetStr.isBlank()) {
