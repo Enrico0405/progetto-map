@@ -254,9 +254,18 @@ public class GamePanel extends JPanel {
         return null;
     }
 
-    public void renderizzaStato(GameResponse response) {
+   public void renderizzaStato(GameResponse response) {
+        if (response == null) return;
+
         if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
             String msg = response.getMessaggio();
+
+            // Intercetta il ritorno al menu principale
+            if (msg.toLowerCase().contains("tornato al menu principale") || msg.toLowerCase().contains("menu principale")) {
+                aggiungiTestoAllaConsole(msg);
+                mostraSchermataIniziale();
+                return; // Interrompe il rendering della stanza di gioco
+            }
 
             if (msg.startsWith("MAPPA_LIVELLO:")) {
                 String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
@@ -268,7 +277,7 @@ public class GamePanel extends JPanel {
                 mainFrame.apriInventario();
             } else {
                 if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
-                    msg = msg.replace("vedi mappa", "vedi mappa\n  - apri inventario          : Visualizza la finestra dell'inventario");
+                    msg = msg.replace("vedi mappa", "vedi mappa\n   - apri inventario          : Visualizza la finestra dell'inventario");
                 }
                 aggiungiTestoAllaConsole(msg);
             }
