@@ -401,7 +401,7 @@ public class GamePanel extends JPanel {
 private String recuperaMusicaStanza(String percorsoSfondo) {
     // Se non c'è uno sfondo stanza (siamo ancora nei prompt di login/menu), mantiene la musica del menu
     if (percorsoSfondo == null || percorsoSfondo.trim().isEmpty()) {
-        return "colonne_sonore/menu/menu_principale.mp3"; // Sostituisci con il percorso esatto del tuo tema menu
+        return "colonne_sonore/menu/canzone_menu_principale.mp3";
     }
 
     String path = percorsoSfondo.toLowerCase();
