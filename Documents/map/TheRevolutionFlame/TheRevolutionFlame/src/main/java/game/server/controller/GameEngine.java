@@ -178,8 +178,12 @@ public class GameEngine {
             }
         }
 
-        return "Comando non riconosciuto. Digita 'help' per la lista dei comandi disponibili.";
+        if (state != null && state.isInCombattimento()) {
+        return "Comando non valido in combattimento. Digita 'attacca', 'usa <oggetto>', 'fuga' o 'help'.";
     }
+
+    return "Comando non riconosciuto. Digita 'help' per la lista dei comandi disponibili.";
+}
 
     // =========================================================================
     // METODI AUSILIARI DI GESTIONE LOGICA
