@@ -5,6 +5,7 @@ import game.server.model.Giocatore;
 import game.server.model.Item;
 import game.server.model.Stanza;
 import game.server.model.TipoItem;
+import game.server.model.TargetEffetto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -169,7 +170,7 @@ public class InventoryController {
     }
 
     // =========================================================================
-    // METODI DI EQUIPAGGIAMENTO
+    // METODI DI EQUIPAGGIAMENTO (CON VALIDAZIONE TIPO ITEM)
     // =========================================================================
 
     public boolean equipaggiaArma(Giocatore player, String coordinate) {
@@ -181,6 +182,10 @@ public class InventoryController {
 
         if (index >= 0 && index < inventario.size() && inventario.get(index) != null) {
             Item item = inventario.get(index);
+            // Controllo rigoroso: solo le armi possono essere equipaggiate qui
+            if (item.getTipo() != TipoItem.ARMA) {
+                return false; 
+            }
             player.setArmaEquipaggiata(item);
             return true;
         }
@@ -196,6 +201,10 @@ public class InventoryController {
 
         if (index >= 0 && index < inventario.size() && inventario.get(index) != null) {
             Item item = inventario.get(index);
+            // Controllo rigoroso: solo le pozioni possono essere equipaggiate come consumabili
+            if (item.getTipo() != TipoItem.POZIONE) {
+                return false; 
+            }
             player.setConsumabileEquipaggiato(item);
             return true;
         }
@@ -238,6 +247,11 @@ public class InventoryController {
         Item item = player.getInventario().get(index);
 
         if (tipoEquip == 'A') {
+            // Impedisce di equipaggiare pergamene, chiavi o rune come arma
+            if (item.getTipo() != TipoItem.ARMA) {
+                return "Errore: " + item.getNome() + " non è un'arma e non può essere equipaggiato nello slot arma!";
+            }
+
             if (player.getArmaEquipaggiata() == item) {
                 player.setArmaEquipaggiata(null);
                 return "Arma disequipaggiata: " + item.getNome();
@@ -246,6 +260,11 @@ public class InventoryController {
                 return "Equipaggiata arma: " + item.getNome();
             }
         } else {
+            // Impedisce di equipaggiare armi, pergamene o chiavi come consumabile
+            if (item.getTipo() != TipoItem.POZIONE) {
+                return "Errore: " + item.getNome() + " non è una pozione e non può essere equipaggiato come consumabile!";
+            }
+
             if (player.getConsumabileEquipaggiato() == item) {
                 player.setConsumabileEquipaggiato(null);
                 return "Consumabile disequipaggiato: " + item.getNome();
