@@ -399,15 +399,21 @@ public class GamePanel extends JPanel {
  * Metodo helper per recuperare la musica di sottofondo della stanza
  */
 private String recuperaMusicaStanza(String percorsoSfondo) {
-    String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
+    // Se non c'è uno sfondo stanza (siamo ancora nei prompt di login/menu), mantiene la musica del menu
+    if (percorsoSfondo == null || percorsoSfondo.trim().isEmpty()) {
+        return "colonne_sonore/menu/menu_principale.mp3"; // Sostituisci con il percorso esatto del tuo tema menu
+    }
+
+    String path = percorsoSfondo.toLowerCase();
 
     if (path.contains("bosco")) {
         return "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
-    } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
+    } else if (path.contains("livello_2") || path.contains("secondo_livello") || path.contains("chiesa")) {
         return "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
-    } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
+    } else if (path.contains("livello_3") || path.contains("terzo_livello") || path.contains("tempio")) {
         return "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
     } else {
+        // Stanza di esplorazione del primo livello (es. centro, casa, entrata, periferia)
         return "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
     }
 }
