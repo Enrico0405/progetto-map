@@ -96,17 +96,6 @@ CREATE TABLE IF NOT EXISTS STANZA_PARTITA (
     FOREIGN KEY (id_partita) REFERENCES PARTITA(id_partita) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS STANZA_PARTITA_ITEM (
-    id_stanza INT NOT NULL,
-    id_partita INT NOT NULL,
-    slot_index INT NOT NULL,
-    id_item INT NOT NULL,
-    PRIMARY KEY (id_stanza, id_partita, slot_index),
-    FOREIGN KEY (id_stanza) REFERENCES STANZA(id_stanza) ON DELETE CASCADE,
-    FOREIGN KEY (id_partita) REFERENCES PARTITA(id_partita) ON DELETE CASCADE,
-    FOREIGN KEY (id_item) REFERENCES ITEM(id_item) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS STANZA_PARTITA_NEMICO (
     id_stanza INT NOT NULL,
     id_partita INT NOT NULL,
