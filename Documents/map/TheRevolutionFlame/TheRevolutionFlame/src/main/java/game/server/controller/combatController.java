@@ -79,6 +79,10 @@ public class combatController {
             gameState.setInCombattimento(false);
             sessioniInAttesaFuga.remove(gameState.getIdGiocatore());
             esito.append("\nHai sconfitto ").append(nemico.getNome()).append("!");
+            
+            // RICOMPENSA VITTORIA BOSS
+            gestisciRicompensaVittoria(player, nemico, esito);
+
             return esito.toString();
         }
 
@@ -139,6 +143,10 @@ public class combatController {
             gameState.setInCombattimento(false);
             sessioniInAttesaFuga.remove(gameState.getIdGiocatore());
             esito.append("Hai sconfitto ").append(nemico.getNome()).append("!");
+
+            // RICOMPENSA VITTORIA BOSS
+            gestisciRicompensaVittoria(player, nemico, esito);
+
             return esito.toString();
         }
 
@@ -147,6 +155,23 @@ public class combatController {
         }
 
         return esito.toString();
+    }
+
+    /**
+     * Verifica se il nemico sconfitto è un Boss di livello.
+     * In tal caso aumenta di +20 gli HP Massimi del giocatore e ripristina la salute al 100%.
+     */
+    private void gestisciRicompensaVittoria(Giocatore player, Nemico nemico, StringBuilder esito) {
+        if (nemico != null && nemico.getTipo() == TipoNemico.BOSS) {
+            int nuovoMaxHp = player.getMaxHp() + 20;
+            player.setMaxHp(nuovoMaxHp);
+            player.setHp(nuovoMaxHp); // Ripristino completo della salute al nuovo valore massimo
+            
+            esito.append("\n[VITTORIA SUL BOSS LOGRATA!] La tua tempra e la tua forza aumentano!")
+                 .append("\nSalute Massima Aumentata: +20 HP.")
+                 .append("\nSalute completamente ripristinata! (HP: ")
+                 .append(player.getHp()).append("/").append(player.getMaxHp()).append(")");
+        }
     }
 
     /**
@@ -184,23 +209,16 @@ public class combatController {
             return sb.toString();
         }
 
-        // Fuga garantita al 100% se esistono vie aperte
         sessioniInAttesaFuga.add(id);
         return "Sei riuscito a disingaggiarti! Dove vuoi fuggire? Vie disponibili: "
                 + String.join(", ", vieAperte)
                 + "\n(Usa il comando per muoverti nella direzione desiderata)";
     }
 
-    /**
-     * Verifica se la sessione corrente ha un disingaggio attivo e deve muoversi.
-     */
     public boolean isInAttesaFuga(int idGiocatore) {
         return sessioniInAttesaFuga.contains(idGiocatore);
     }
 
-    /**
-     * Fase 2: Chiamata quando l'utente specifica la direzione dopo una fuga riuscita.
-     */
     public String confermaDirezioneFuga(GameState gameState, String direzione) {
         int id = gameState.getIdGiocatore();
         if (!sessioniInAttesaFuga.contains(id)) {
@@ -223,12 +241,10 @@ public class combatController {
             return "Il passaggio verso " + direzione.toUpperCase() + " è bloccato! Scegli un'altra via!";
         }
 
-        // Spostamento effettivo senza toccare le classi del modello
         Giocatore player = gameState.getPlayer();
         player.setStanzaCorrente(destinazione);
         gameState.setStanzaAttuale(destinazione);
 
-        // Uscita dal combattimento e rimozione dell'attesa
         gameState.setInCombattimento(false);
         sessioniInAttesaFuga.remove(id);
 

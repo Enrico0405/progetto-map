@@ -12,8 +12,8 @@ public class Giocatore {
 
     private int id;
     private String nome;
-    private int hp;
-    private int maxHp;
+    private int hp = 100;    // Default per evitare che nasca a 0 HP
+    private int maxHp = 100; // Default per evitare che nasca a 0 Max HP
     private String avatarPath;
     private List<Item> inventario;
     private Item armaEquipaggiata;
@@ -21,14 +21,16 @@ public class Giocatore {
     private Stanza stanzaCorrente;
 
     public Giocatore() {
+        this.hp = 100;
+        this.maxHp = 100;
         this.inventario = new ArrayList<>();
     }
 
     public Giocatore(int id, String nome, int hp, int maxHp, String avatarPath) {
         this.id = id;
         this.nome = nome;
-        this.hp = hp;
-        this.maxHp = maxHp;
+        this.hp = (hp > 0) ? hp : 100;
+        this.maxHp = (maxHp > 0) ? maxHp : 100;
         this.avatarPath = avatarPath;
         this.inventario = new ArrayList<>();
     }

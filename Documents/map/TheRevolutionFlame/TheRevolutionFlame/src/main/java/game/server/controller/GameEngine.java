@@ -125,14 +125,14 @@ public class GameEngine {
             (idSess, state, m) -> gestisciUscitaPartita(idSess, state), true));
 
         // =========================================================================
-        // 3. COMBATTIMENTO
+        // 3. COMBATTIMENTO (Con Auto-Save per ricompense Boss)
         // =========================================================================
 
         registry.add(new CommandRule("^attacc[oa]$", 
-            (idSess, state, m) -> combatController.eseguiAttacco(state), true));
+            (idSess, state, m) -> gestisciAttaccoCombattimento(state), true));
 
         registry.add(new CommandRule("^usa\\s+consumabile$", 
-            (idSess, state, m) -> inventoryController.usaConsumabileEquipaggiato(state), true));
+            (idSess, state, m) -> gestisciUsoConsumabile(state), true));
 
         registry.add(new CommandRule("^fuga$", 
             (idSess, state, m) -> combatController.avviaTentativoFuga(state), true));
@@ -185,6 +185,20 @@ public class GameEngine {
     // METODI AUSILIARI DI GESTIONE LOGICA
     // =========================================================================
 
+    private String gestisciAttaccoCombattimento(GameState state) {
+        String esito = combatController.eseguiAttacco(state);
+        // Sincronizza immediatamente il DB dopo l'attacco (salvando la vittoria sul Boss o eventuali variazioni HP)
+        dbManager.salvaGameState(state);
+        return esito;
+    }
+
+    private String gestisciUsoConsumabile(GameState state) {
+        String esito = inventoryController.usaConsumabileEquipaggiato(state);
+        // Sincronizza il DB dopo l'uso del consumabile
+        dbManager.salvaGameState(state);
+        return esito;
+    }
+
     private String gestisciEsaminaStanza(GameState state) {
         if (state == null || state.getStanzaAttuale() == null) {
             return "Nessuna stanza attiva da esaminare.";
@@ -202,13 +216,15 @@ public class GameEngine {
             sb.append("OGGETTI PRESENTI A TERRA:\n");
             for (int i = 0; i < oggetti.size(); i++) {
                 Item item = oggetti.get(i);
-                char riga = (char) ('a' + (i / 4));
-                int colonna = (i % 4) + 1;
-                String codSlot = "S" + riga + colonna;
+                if (item != null) {
+                    char riga = (char) ('a' + (i / 4));
+                    int colonna = (i % 4) + 1;
+                    String codSlot = "S" + riga + colonna;
 
-                sb.append("  - Slot [").append(codSlot).append("]: ").append(item.getNome())
-                  .append(" (Tipo: ").append(item.getTipo())
-                  .append(", Effetto: ").append(item.getValoreEffetto()).append(")\n");
+                    sb.append("  - Slot [").append(codSlot).append("]: ").append(item.getNome())
+                      .append(" (Tipo: ").append(item.getTipo())
+                      .append(", Effetto: ").append(item.getValoreEffetto()).append(")\n");
+                }
             }
             sb.append("\n(Usa 'sposta Sa1 in Ga1' per raccogliere l'oggetto nello slot desiderato)");
         }
@@ -263,9 +279,11 @@ public class GameEngine {
 
         StringBuilder sb = new StringBuilder("--- RISULTATI RICERCA INVENTARIO ---\n");
         for (Item item : risultati) {
-            sb.append("- ").append(item.getNome())
-              .append(" [Tipo: ").append(item.getTipo()).append("]")
-              .append(" (Effetto: ").append(item.getValoreEffetto()).append(")\n");
+            if (item != null) {
+                sb.append("- ").append(item.getNome())
+                  .append(" [Tipo: ").append(item.getTipo()).append("]")
+                  .append(" (Effetto: ").append(item.getValoreEffetto()).append(")\n");
+            }
         }
         return sb.toString().trim();
     }
