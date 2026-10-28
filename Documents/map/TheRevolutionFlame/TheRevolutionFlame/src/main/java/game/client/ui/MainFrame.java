@@ -127,4 +127,7 @@ public class MainFrame extends JFrame {
             System.err.println("ERRORE: Impossibile connettersi al server. Assicurati che il MainServer sia in esecuzione.");
         }
     }
+    public void resettaSessione() {
+    this.idGiocatoreCorrente = -1;
+    }
 }

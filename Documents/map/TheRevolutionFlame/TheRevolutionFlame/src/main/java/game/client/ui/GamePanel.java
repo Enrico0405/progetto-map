@@ -16,6 +16,9 @@ public class GamePanel extends JPanel {
     private JTextField txtInputComando;
     private boolean eraInCombattimento = false;
     
+    // Traccia se la GUI si trova attualmente nella schermata del menu principale
+    private boolean inMenuPrincipale = true;
+
     // Componenti di stato
     private JLabel lblSalute;
     private JLabel lblArmaEquipaggiata;
@@ -195,6 +198,14 @@ public class GamePanel extends JPanel {
             if (!testoInserito.isEmpty()) {
                 String cmdLower = testoInserito.toLowerCase();
 
+                // Intercetta il comando per tornare al menu principale
+                if (cmdLower.equals("menu") || cmdLower.equals("menu principale") || cmdLower.equals("torna al menu")) {
+                    mainFrame.resettaSessione();
+                    mostraSchermataIniziale();
+                    txtInputComando.setText("");
+                    return;
+                }
+
                 // Intercetta l'apertura manuale dell'inventario
                 if (cmdLower.equals("apri inventario") || cmdLower.equals("inventario") || cmdLower.equals("vedi inventario")) {
                     mainFrame.apriInventario();
@@ -237,6 +248,7 @@ public class GamePanel extends JPanel {
     private Image caricaSpriteGiocatore(String pathCustom) {
         String[] percorsi = {
             pathCustom,
+            "personaggi/protagonista/even.png",
             "personaggi/protagonista/Even.png",
             "personaggi/eroe.png",
             "personaggi/protagonista/eroe.png",
@@ -254,164 +266,181 @@ public class GamePanel extends JPanel {
         return null;
     }
 
- public void renderizzaStato(GameResponse response) {
-    if (response == null) return;
+    public void renderizzaStato(GameResponse response) {
+        if (response == null) return;
 
-    if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
-        String msg = response.getMessaggio();
-        String msgLower = msg.toLowerCase().trim();
-
-        // Controllo rigoroso per l'uscita al menu: evita che le spiegazioni dei comandi in 'help' attivino per errore la schermata iniziale
-        if (msgLower.contains("tornato al menu principale") || msgLower.equals("menu principale")) {
-            aggiungiTestoAllaConsole(msg);
-            mostraSchermataIniziale();
-            return; // Interrompe il rendering della stanza di gioco
+        // Se la GUI è attualmente sul menu principale e la risposta del server è un residuo di Game Over/Vittoria, ignoriamo l'aggiornamento
+        if (inMenuPrincipale && (response.isGameOver() || response.isVittoria())) {
+            return;
         }
 
-        if (msg.startsWith("MAPPA_LIVELLO:")) {
-            String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
-            SwingUtilities.invokeLater(() -> {
-                MapDialog mapDialog = new MapDialog(mainFrame);
-                mapDialog.mostraMappa(pathMappa);
-            });
-        } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
-            mainFrame.apriInventario();
-        } else {
-            if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
-                msg = msg.replace("vedi mappa", "vedi mappa\n   - apri inventario          : Visualizza la finestra dell'inventario");
+        // Se arriva una risposta valida di gioco in corso, usciamo dallo stato di menu principale
+        if (!response.isGameOver() && !response.isVittoria() && 
+           ((response.getStanzaSfondoPath() != null && !response.getStanzaSfondoPath().isEmpty()) || response.getIdGiocatore() > 0)) {
+            this.inMenuPrincipale = false;
+        }
+
+        if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
+            String msg = response.getMessaggio();
+            String msgLower = msg.toLowerCase().trim();
+
+            // Controllo per l'uscita al menu
+            if (msgLower.contains("tornato al menu principale") || msgLower.equals("menu principale")) {
+                mostraSchermataIniziale();
+                return;
             }
-            aggiungiTestoAllaConsole(msg);
+
+            if (msg.startsWith("MAPPA_LIVELLO:")) {
+                String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
+                SwingUtilities.invokeLater(() -> {
+                    MapDialog mapDialog = new MapDialog(mainFrame);
+                    mapDialog.mostraMappa(pathMappa);
+                });
+            } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
+                mainFrame.apriInventario();
+            } else {
+                if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
+                    msg = msg.replace("vedi mappa", "vedi mappa\n   - apri inventario          : Visualizza la finestra dell'inventario");
+                }
+                aggiungiTestoAllaConsole(msg);
+            }
         }
-    }
 
-    lblSalute.setText("Salute: " + response.getPlayerHp() + "/" + response.getPlayerMaxHp());
-    
-    if (response.getPlayerHp() <= 20) {
-        lblSalute.setForeground(Color.RED);
-    } else if (response.getPlayerHp() <= 40) {
-        lblSalute.setForeground(Color.YELLOW);
-    } else {
-        lblSalute.setForeground(TESTO_VERDE);
-    }
-
-    // 1. CARICAMENTO SFONDO
-    String percorsoSfondo = response.getStanzaSfondoPath();
-    if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
-        percorsoSfondo = response.getMappaPngPath();
-    }
-    
-    if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
-        ImageIcon iconaSfondo = ImageCacheManager.getIcona(percorsoSfondo);
-        this.imgSfondoCorrente = (iconaSfondo != null) ? iconaSfondo.getImage() : null;
-    }
-
-    // 2. CARICAMENTO GIOCATORE E NEMICO
-    this.inCombattimentoAttivo = response.isInCombattimento();
-    
-    if (this.imgGiocatoreCorrente == null) {
-        this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
-    }
-
-    if (inCombattimentoAttivo && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
-        ImageIcon iconaNemico = ImageCacheManager.getIcona(response.getEnemySpritePath());
-        this.imgNemicoCorrente = (iconaNemico != null) ? iconaNemico.getImage() : null;
-    } else {
-        this.imgNemicoCorrente = null;
-    }
-
-    // 3. SELEZIONE E RIPRODUZIONE DELLA COLONNA SONORA DINAMICA
-    gestisciMusicaAmbiente(response, percorsoSfondo);
-
-    this.repaint();
-
-    if (response.isInCombattimento()) {
-        aggiungiTestoAllaConsole(">> COMBATTIMENTO IN CORSO! HP Nemico: " + response.getEnemyHp());
-    }
-
-    if (response.isGameOver() || response.isVittoria()) {
-        txtInputComando.setEnabled(false);
-        txtInputComando.setText("PARTITA TERMINATA.");
+        lblSalute.setText("Salute: " + response.getPlayerHp() + "/" + response.getPlayerMaxHp());
         
-        if (response.isVittoria()) {
-            aggiungiTestoAllaConsole("\n*** HAI VINTO! ***");
+        if (response.getPlayerHp() <= 20) {
+            lblSalute.setForeground(Color.RED);
+        } else if (response.getPlayerHp() <= 40) {
+            lblSalute.setForeground(Color.YELLOW);
         } else {
-            aggiungiTestoAllaConsole("\n*** GAME OVER ***");
+            lblSalute.setForeground(TESTO_VERDE);
+        }
+
+        // 1. CARICAMENTO SFONDO
+        String percorsoSfondo = response.getStanzaSfondoPath();
+        if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
+            percorsoSfondo = response.getMappaPngPath();
+        }
+        
+        if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
+            ImageIcon iconaSfondo = ImageCacheManager.getIcona(percorsoSfondo);
+            this.imgSfondoCorrente = (iconaSfondo != null) ? iconaSfondo.getImage() : null;
+        }
+
+        // 2. CARICAMENTO GIOCATORE E NEMICO
+        this.inCombattimentoAttivo = response.isInCombattimento();
+        
+        if (this.imgGiocatoreCorrente == null) {
+            this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
+        }
+
+        if (inCombattimentoAttivo && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
+            ImageIcon iconaNemico = ImageCacheManager.getIcona(response.getEnemySpritePath());
+            this.imgNemicoCorrente = (iconaNemico != null) ? iconaNemico.getImage() : null;
+        } else {
+            this.imgNemicoCorrente = null;
+        }
+
+        // 3. SELEZIONE E RIPRODUZIONE DELLA COLONNA SONORA DINAMICA
+        gestisciMusicaAmbiente(response, percorsoSfondo);
+
+        this.repaint();
+
+        if (response.isInCombattimento()) {
+            aggiungiTestoAllaConsole(">> COMBATTIMENTO IN CORSO! HP Nemico: " + response.getEnemyHp());
+        }
+
+        // Gestione Game Over e Vittoria
+        if (response.isGameOver() || response.isVittoria()) {
+            txtInputComando.setEnabled(true);
+            txtInputComando.requestFocusInWindow();
+            
+            if (response.isVittoria()) {
+                aggiungiTestoAllaConsole("\n*** HAI VINTO! ***");
+            } else {
+                aggiungiTestoAllaConsole("\n*** GAME OVER ***");
+            }
+
+            aggiungiTestoAllaConsole(">> Digita 'menu' per tornare al menu principale.");
         }
     }
-}
 
     /**
      * Mappa ed esegue il cambio di traccia audio in base alla posizione e allo stato di gioco
      */
-   private void gestisciMusicaAmbiente(GameResponse response, String percorsoSfondo) {
-    String nuovaTraccia = "";
-    String messaggioServer = (response.getMessaggio() != null) ? response.getMessaggio().toLowerCase() : "";
+    private void gestisciMusicaAmbiente(GameResponse response, String percorsoSfondo) {
+        String nuovaTraccia = "";
+        String messaggioServer = (response.getMessaggio() != null) ? response.getMessaggio().toLowerCase() : "";
 
-    // 1. Vittoria finale di tutto il gioco o Game Over
-    if (response.isVittoria()) {
-        nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
-    } else if (response.isGameOver()) {
-        SoundManager.stopMusic();
-        tracciaMusicaleAttuale = "";
-        eraInCombattimento = false;
-        return;
-    } else if (response.isInCombattimento()) {
-        // COMBATTIMENTO IN CORSO
-        eraInCombattimento = true;
-        
-        String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
-        
-        if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
-            nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
-        } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
-            nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
-        } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
-            nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
-        } else {
-            nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
-        }
-    } else {
-        // ESPLORAZIONE: Controlla se siamo appena usciti da un combattimento
-        if (eraInCombattimento) {
-            eraInCombattimento = false; // Reset dello stato
-
-            // Se siamo usciti dal combattimento FUGGENDO, NON far partire la vittoria!
-            if (messaggioServer.contains("fuggito") || messaggioServer.contains("fuga") || messaggioServer.contains("scappato")) {
-                // Imposta la musica della stanza di destinazione
-                nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
+        // 1. Vittoria finale di tutto il gioco o Game Over
+        if (response.isVittoria()) {
+            nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+        } else if (response.isGameOver()) {
+            SoundManager.stopMusic();
+            tracciaMusicaleAttuale = "";
+            eraInCombattimento = false;
+            return;
+        } else if (response.isInCombattimento()) {
+            // COMBATTIMENTO IN CORSO
+            eraInCombattimento = true;
+            
+            String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
+            
+            if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
+            } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
+            } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
+                nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
             } else {
-                // Scontro vinto regolarmente!
-                nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+                nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";
             }
         } else {
-            // Normale esplorazione
-            nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
+            // ESPLORAZIONE: Controlla se siamo appena usciti da un combattimento
+            if (eraInCombattimento) {
+                eraInCombattimento = false; // Reset dello stato
+
+                // Se siamo usciti dal combattimento FUGGENDO, NON far partire la vittoria!
+                if (messaggioServer.contains("fuggito") || messaggioServer.contains("fuga") || messaggioServer.contains("scappato")) {
+                    // Imposta la musica della stanza di destinazione
+                    nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
+                } else {
+                    // Scontro vinto regolarmente!
+                    nuovaTraccia = "colonne_sonore/combattimento/tema_della_vittoria.mp3";
+                }
+            } else {
+                // Normale esplorazione
+                nuovaTraccia = recuperaMusicaStanza(percorsoSfondo);
+            }
+        }
+
+        // Avvia la musica solo se è diversa da quella attualmente in riproduzione
+        if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
+            tracciaMusicaleAttuale = nuovaTraccia;
+            SoundManager.playMusic(nuovaTraccia);
         }
     }
 
-    // Avvia la musica solo se è diversa da quella attualmente in riproduzione
-    if (!nuovaTraccia.isEmpty() && !nuovaTraccia.equals(tracciaMusicaleAttuale)) {
-        tracciaMusicaleAttuale = nuovaTraccia;
-        SoundManager.playMusic(nuovaTraccia);
-    }
-}
+    /**
+     * Metodo helper per recuperare la musica di sottofondo della stanza
+     */
+    private String recuperaMusicaStanza(String percorsoSfondo) {
+        if (percorsoSfondo == null || percorsoSfondo.trim().isEmpty()) {
+            return "colonne_sonore/menu/canzone_menu_principale.mp3";
+        }
 
-/**
- * Metodo helper per recuperare la musica di sottofondo della stanza
- */
-private String recuperaMusicaStanza(String percorsoSfondo) {
-    String path = (percorsoSfondo != null) ? percorsoSfondo.toLowerCase() : "";
+        String path = percorsoSfondo.toLowerCase();
 
-    if (path.contains("bosco")) {
-        return "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
-    } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
-        return "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
-    } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
-        return "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
-    } else {
-        return "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+        if (path.contains("bosco")) {
+            return "colonne_sonore/esplorazione_primo_livello/bosco.mp3";
+        } else if (path.contains("livello_2") || path.contains("secondo_livello")) {
+            return "colonne_sonore/esplorazione_secondo_livello/esplorazione_secondo_livello.mp3";
+        } else if (path.contains("livello_3") || path.contains("terzo_livello")) {
+            return "colonne_sonore/esplorazione_terzo_livello/esplorazione_terzo_livello.mp3";
+        } else {
+            return "colonne_sonore/esplorazione_primo_livello/villaggio.mp3";
+        }
     }
-}
 
     private void aggiungiTestoAllaConsole(String testo) {
         try {
@@ -422,13 +451,16 @@ private String recuperaMusicaStanza(String percorsoSfondo) {
             e.printStackTrace();
         }
     }
-    
-  
 
     public void mostraSchermataIniziale() {
-        // Reset preventivo dello stato di combattimento e degli sprite
+        // Attiva lo stato di menu principale e azzera la console
+        this.inMenuPrincipale = true;
         this.inCombattimentoAttivo = false;
         this.imgNemicoCorrente = null;
+        
+        if (txtLogConsole != null) {
+            txtLogConsole.setText("");
+        }
 
         aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
         aggiungiTestoAllaConsole("digita si se hai già giocato in precedenza, no se e' la prima volta");
