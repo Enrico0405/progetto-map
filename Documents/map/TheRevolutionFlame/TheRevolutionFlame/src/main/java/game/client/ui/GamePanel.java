@@ -254,81 +254,91 @@ public class GamePanel extends JPanel {
         return null;
     }
 
-    public void renderizzaStato(GameResponse response) {
-        if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
-            String msg = response.getMessaggio();
+ public void renderizzaStato(GameResponse response) {
+    if (response == null) return;
 
-            if (msg.startsWith("MAPPA_LIVELLO:")) {
-                String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
-                SwingUtilities.invokeLater(() -> {
-                    MapDialog mapDialog = new MapDialog(mainFrame);
-                    mapDialog.mostraMappa(pathMappa);
-                });
-            } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
-                mainFrame.apriInventario();
-            } else {
-                if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
-                    msg = msg.replace("vedi mappa", "vedi mappa\n  - apri inventario          : Visualizza la finestra dell'inventario");
-                }
-                aggiungiTestoAllaConsole(msg);
-            }
+    if (response.getMessaggio() != null && !response.getMessaggio().isEmpty()) {
+        String msg = response.getMessaggio();
+        String msgLower = msg.toLowerCase().trim();
+
+        // Controllo rigoroso per l'uscita al menu: evita che le spiegazioni dei comandi in 'help' attivino per errore la schermata iniziale
+        if (msgLower.contains("tornato al menu principale") || msgLower.equals("menu principale")) {
+            aggiungiTestoAllaConsole(msg);
+            mostraSchermataIniziale();
+            return; // Interrompe il rendering della stanza di gioco
         }
 
-        lblSalute.setText("Salute: " + response.getPlayerHp() + "/" + response.getPlayerMaxHp());
-        
-        if (response.getPlayerHp() <= 20) {
-            lblSalute.setForeground(Color.RED);
-        } else if (response.getPlayerHp() <= 40) {
-            lblSalute.setForeground(Color.YELLOW);
+        if (msg.startsWith("MAPPA_LIVELLO:")) {
+            String pathMappa = msg.substring("MAPPA_LIVELLO:".length()).trim();
+            SwingUtilities.invokeLater(() -> {
+                MapDialog mapDialog = new MapDialog(mainFrame);
+                mapDialog.mostraMappa(pathMappa);
+            });
+        } else if (msg.startsWith("INVENTARIO_LIVELLO:") || msg.startsWith("INVENTARIO:")) {
+            mainFrame.apriInventario();
         } else {
-            lblSalute.setForeground(TESTO_VERDE);
-        }
-
-        // 1. CARICAMENTO SFONDO
-        String percorsoSfondo = response.getStanzaSfondoPath();
-        if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
-            percorsoSfondo = response.getMappaPngPath();
-        }
-        
-        if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
-            ImageIcon iconaSfondo = ImageCacheManager.getIcona(percorsoSfondo);
-            this.imgSfondoCorrente = (iconaSfondo != null) ? iconaSfondo.getImage() : null;
-        }
-
-        // 2. CARICAMENTO GIOCATORE E NEMICO
-        this.inCombattimentoAttivo = response.isInCombattimento();
-        
-        if (this.imgGiocatoreCorrente == null) {
-            this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
-        }
-
-        if (inCombattimentoAttivo && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
-            ImageIcon iconaNemico = ImageCacheManager.getIcona(response.getEnemySpritePath());
-            this.imgNemicoCorrente = (iconaNemico != null) ? iconaNemico.getImage() : null;
-        } else {
-            this.imgNemicoCorrente = null;
-        }
-
-        // 3. SELEZIONE E RIPRODUZIONE DELLA COLONNA SONORA DINAMICA
-        gestisciMusicaAmbiente(response, percorsoSfondo);
-
-        this.repaint();
-
-        if (response.isInCombattimento()) {
-            aggiungiTestoAllaConsole(">> COMBATTIMENTO IN CORSO! HP Nemico: " + response.getEnemyHp());
-        }
-
-        if (response.isGameOver() || response.isVittoria()) {
-            txtInputComando.setEnabled(false);
-            txtInputComando.setText("PARTITA TERMINATA.");
-            
-            if (response.isVittoria()) {
-                aggiungiTestoAllaConsole("\n*** HAI VINTO! ***");
-            } else {
-                aggiungiTestoAllaConsole("\n*** GAME OVER ***");
+            if (msg.contains("ESPLORAZIONE:") && !msg.contains("apri inventario")) {
+                msg = msg.replace("vedi mappa", "vedi mappa\n   - apri inventario          : Visualizza la finestra dell'inventario");
             }
+            aggiungiTestoAllaConsole(msg);
         }
     }
+
+    lblSalute.setText("Salute: " + response.getPlayerHp() + "/" + response.getPlayerMaxHp());
+    
+    if (response.getPlayerHp() <= 20) {
+        lblSalute.setForeground(Color.RED);
+    } else if (response.getPlayerHp() <= 40) {
+        lblSalute.setForeground(Color.YELLOW);
+    } else {
+        lblSalute.setForeground(TESTO_VERDE);
+    }
+
+    // 1. CARICAMENTO SFONDO
+    String percorsoSfondo = response.getStanzaSfondoPath();
+    if (percorsoSfondo == null || percorsoSfondo.isEmpty()) {
+        percorsoSfondo = response.getMappaPngPath();
+    }
+    
+    if (percorsoSfondo != null && !percorsoSfondo.isEmpty()) {
+        ImageIcon iconaSfondo = ImageCacheManager.getIcona(percorsoSfondo);
+        this.imgSfondoCorrente = (iconaSfondo != null) ? iconaSfondo.getImage() : null;
+    }
+
+    // 2. CARICAMENTO GIOCATORE E NEMICO
+    this.inCombattimentoAttivo = response.isInCombattimento();
+    
+    if (this.imgGiocatoreCorrente == null) {
+        this.imgGiocatoreCorrente = caricaSpriteGiocatore(null);
+    }
+
+    if (inCombattimentoAttivo && response.getEnemySpritePath() != null && !response.getEnemySpritePath().isEmpty()) {
+        ImageIcon iconaNemico = ImageCacheManager.getIcona(response.getEnemySpritePath());
+        this.imgNemicoCorrente = (iconaNemico != null) ? iconaNemico.getImage() : null;
+    } else {
+        this.imgNemicoCorrente = null;
+    }
+
+    // 3. SELEZIONE E RIPRODUZIONE DELLA COLONNA SONORA DINAMICA
+    gestisciMusicaAmbiente(response, percorsoSfondo);
+
+    this.repaint();
+
+    if (response.isInCombattimento()) {
+        aggiungiTestoAllaConsole(">> COMBATTIMENTO IN CORSO! HP Nemico: " + response.getEnemyHp());
+    }
+
+    if (response.isGameOver() || response.isVittoria()) {
+        txtInputComando.setEnabled(false);
+        txtInputComando.setText("PARTITA TERMINATA.");
+        
+        if (response.isVittoria()) {
+            aggiungiTestoAllaConsole("\n*** HAI VINTO! ***");
+        } else {
+            aggiungiTestoAllaConsole("\n*** GAME OVER ***");
+        }
+    }
+}
 
     /**
      * Mappa ed esegue il cambio di traccia audio in base alla posizione e allo stato di gioco
@@ -413,11 +423,16 @@ private String recuperaMusicaStanza(String percorsoSfondo) {
         }
     }
     
-    public void mostraSchermataIniziale() 
-    {
+  
+
+    public void mostraSchermataIniziale() {
+        // Reset preventivo dello stato di combattimento e degli sprite
+        this.inCombattimentoAttivo = false;
+        this.imgNemicoCorrente = null;
+
         aggiungiTestoAllaConsole("Benvenuto su The Revolution Flame");
-        aggiungiTestoAllaConsole("digita si se hai già giocato in precedenza ,no se e' la prima volta");
-        
+        aggiungiTestoAllaConsole("digita si se hai già giocato in precedenza, no se e' la prima volta");
+
         // Imposta l'immagine di copertina e aggiorna la grafica del pannello
         this.imgSfondoCorrente = caricaImmagineCopertina();
         this.repaint();
