@@ -172,7 +172,6 @@ INSERT INTO STANZA_ITEM_BASE (id_stanza, id_item ,slot_index) VALUES
 (4, 11,0),
 (4, 2,1),
 (4, 24,2),
-
 (5, 5,0),
 (5, 10,1),
 (5,8,2),
