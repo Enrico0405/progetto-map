@@ -54,16 +54,44 @@ public class InventoryDialog extends JDialog {
 
         JPanel pnlG = new JPanel(new BorderLayout());
         pnlG.setBorder(BorderFactory.createTitledBorder("INVENTARIO GIOCATORE (G)"));
-        pnlG.add(new JScrollPane(tblInventarioGiocatore), BorderLayout.CENTER);
+        pnlG.add(creaScrollPaneConEtichetteRiga(tblInventarioGiocatore), BorderLayout.CENTER);
 
         JPanel pnlS = new JPanel(new BorderLayout());
         pnlS.setBorder(BorderFactory.createTitledBorder("OGGETTI NELLA STANZA (S)"));
-        pnlS.add(new JScrollPane(tblOggettiStanza), BorderLayout.CENTER);
+        pnlS.add(creaScrollPaneConEtichetteRiga(tblOggettiStanza), BorderLayout.CENTER);
 
         pnlScacchiere.add(pnlG);
         pnlScacchiere.add(pnlS);
         
         this.add(pnlScacchiere, BorderLayout.CENTER);
+    }
+
+    /**
+     * Crea uno JScrollPane dotato di un'intestazione verticale (Row Header) 
+     * contenente le lettere 'a', 'b', 'c' perfettamente allineate alle righe della tabella.
+     */
+    private JScrollPane creaScrollPaneConEtichetteRiga(JTable table) {
+        String[] righeEtichette = {"a", "b", "c"};
+        JList<String> rowHeaderList = new JList<>(righeEtichette);
+        rowHeaderList.setFixedCellWidth(25);
+        rowHeaderList.setFixedCellHeight(table.getRowHeight());
+        rowHeaderList.setBackground(new Color(235, 235, 235));
+        rowHeaderList.setForeground(Color.DARK_GRAY);
+        rowHeaderList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        rowHeaderList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                lbl.setHorizontalAlignment(JLabel.CENTER);
+                lbl.setFont(new Font("Monospaced", Font.BOLD, 13));
+                return lbl;
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setRowHeaderView(rowHeaderList);
+        return scrollPane;
     }
 
     private DefaultTableModel createGridModel(String[] colonne) {
