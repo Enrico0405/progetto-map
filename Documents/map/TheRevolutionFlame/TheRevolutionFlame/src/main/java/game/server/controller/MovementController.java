@@ -83,9 +83,14 @@ public class MovementController {
             if (richiesti != null && !richiesti.isEmpty()) {
                 List<Item> inventarioGiocatore = state.getPlayer().getInventario();
 
-                boolean possiedeTutti = richiesti.stream()
-                        .allMatch(req -> inventarioGiocatore != null && 
-                                inventarioGiocatore.stream().anyMatch(inv -> inv.getId() == req.getId()));
+                // Verifica flessibile: controlla sia l'ID che il Nome dell'oggetto (case-insensitive e senza spazi extra)
+                boolean possiedeTutti = (inventarioGiocatore != null) && richiesti.stream()
+                        .allMatch(req -> req != null && inventarioGiocatore.stream().anyMatch(inv -> 
+                            inv != null && (
+                                (inv.getId() != 0 && inv.getId() == req.getId()) ||
+                                (inv.getNome() != null && req.getNome() != null && inv.getNome().trim().equalsIgnoreCase(req.getNome().trim()))
+                            )
+                        ));
 
                 if (possiedeTutti) {
                     destinazione.setBloccata(false);
