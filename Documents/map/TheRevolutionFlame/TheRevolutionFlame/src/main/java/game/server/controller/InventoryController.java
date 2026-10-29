@@ -67,7 +67,7 @@ public class InventoryController {
         } 
         
         // Caso 2: Trasferimento tra inventari diversi (G -> S oppure S -> G)
-        return gestisciTrasferimento(listaOrigine, listaDestinazione, idxOrigine, idxDestinazione, itemSpostato, tipoOrigine, destinazione);
+        return gestisciTrasferimento(player, listaOrigine, listaDestinazione, idxOrigine, idxDestinazione, itemSpostato, tipoOrigine, destinazione);
     }
 
     private void gestisciSpostamentoInterno(List<Item> lista, int idxOrigine, int idxDestinazione) {
@@ -86,7 +86,7 @@ public class InventoryController {
         pulisciCodaNull(lista);
     }
 
-    private String gestisciTrasferimento(List<Item> sorgente, List<Item> destinazione, 
+    private String gestisciTrasferimento(Giocatore player, List<Item> sorgente, List<Item> destinazione, 
                                         int idxOrigine, int idxDestinazione, 
                                         Item itemSpostato, char tipoOrigine, String slotDest) {
         // Riempie la lista di destinazione con null se necessario
@@ -95,6 +95,27 @@ public class InventoryController {
         }
 
         Item itemRimpiazzato = destinazione.get(idxDestinazione);
+
+        // L'oggetto che lascia l'inventario del giocatore è itemSpostato (se esce da 'G') 
+        // oppure itemRimpiazzato (se un item da 'S' prende il suo posto in 'G')
+        Item itemCheEsce = (tipoOrigine == 'G') ? itemSpostato : itemRimpiazzato;
+
+        // CONTROLLO DISEQUIPAGGIAMENTO INLINE
+        if (player != null && itemCheEsce != null) {
+            Item arma = player.getArmaEquipaggiata();
+            if (arma != null && (arma == itemCheEsce || 
+                (arma.getId() != 0 && arma.getId() == itemCheEsce.getId()) || 
+                (arma.getNome() != null && itemCheEsce.getNome() != null && arma.getNome().trim().equalsIgnoreCase(itemCheEsce.getNome().trim())))) {
+                player.setArmaEquipaggiata(null);
+            }
+
+            Item cons = player.getConsumabileEquipaggiato();
+            if (cons != null && (cons == itemCheEsce || 
+                (cons.getId() != 0 && cons.getId() == itemCheEsce.getId()) || 
+                (cons.getNome() != null && itemCheEsce.getNome() != null && cons.getNome().trim().equalsIgnoreCase(itemCheEsce.getNome().trim())))) {
+                player.setConsumabileEquipaggiato(null);
+            }
+        }
         
         // Posiziona l'oggetto nella destinazione esatta
         destinazione.set(idxDestinazione, itemSpostato);
@@ -195,6 +216,7 @@ public class InventoryController {
             player.setArmaEquipaggiata(item);
             return true;
         }
+        
         return false;
     }
 

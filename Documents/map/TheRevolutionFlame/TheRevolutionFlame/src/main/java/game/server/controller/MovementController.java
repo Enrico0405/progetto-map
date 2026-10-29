@@ -83,21 +83,31 @@ public class MovementController {
             if (richiesti != null && !richiesti.isEmpty()) {
                 List<Item> inventarioGiocatore = state.getPlayer().getInventario();
 
-                // Verifica flessibile: controlla sia l'ID che il Nome dell'oggetto (case-insensitive e senza spazi extra)
-                boolean possiedeTutti = (inventarioGiocatore != null) && richiesti.stream()
-                        .allMatch(req -> req != null && inventarioGiocatore.stream().anyMatch(inv -> 
+                // Individua gli oggetti richiesti che NON sono presenti nell'inventario del giocatore
+                List<Item> mancanti = richiesti.stream()
+                        .filter(req -> req != null && (inventarioGiocatore == null || inventarioGiocatore.stream().noneMatch(inv -> 
                             inv != null && (
                                 (inv.getId() != 0 && inv.getId() == req.getId()) ||
                                 (inv.getNome() != null && req.getNome() != null && inv.getNome().trim().equalsIgnoreCase(req.getNome().trim()))
                             )
-                        ));
+                        )))
+                        .toList();
 
-                if (possiedeTutti) {
+                if (mancanti.isEmpty()) {
+                    // Sblocca la stanza
                     destinazione.setBloccata(false);
+
+                    // Consuma/Rimuove gli oggetti usati dall'inventario del giocatore
+                    for (Item req : richiesti) {
+                        state.getPlayer().rimuoviItem(req);
+                    }
+
                     rispostaPrefix.append("[SBLOCCO] Hai usato gli oggetti necessari per sbloccare il passaggio verso ")
                                   .append(dir.toUpperCase()).append("!\n\n");
                 } else {
-                    return "La via verso " + dir.toUpperCase() + " è bloccata! Servono specifici oggetti nell'inventario per aprirla.";
+                    List<String> nomiMancanti = mancanti.stream().map(Item::getNome).toList();
+                    return "La via verso " + dir.toUpperCase() + " è bloccata! Ti mancano i seguenti oggetti: " 
+                            + String.join(", ", nomiMancanti) + ".";
                 }
             } else {
                 return "La via verso " + dir.toUpperCase() + " è bloccata! Devi trovare un modo per sbloccarla.";
