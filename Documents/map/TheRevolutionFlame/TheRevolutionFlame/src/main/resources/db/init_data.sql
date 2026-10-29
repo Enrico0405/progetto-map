@@ -201,7 +201,7 @@ INSERT INTO STANZA_ITEM_BASE (id_stanza, id_item ,slot_index) VALUES
 
 -- 8. OGGETTI RICHIESTI PER STANZE BLOCCATE (Stanza 10 richiede le 2 Chiavi, Stanza 17 richiede le 2 Gemme)
 INSERT INTO STANZA_ITEM_RICHIESTO (id_stanza, id_item) VALUES
-(10, 22),
-(10, 23),
-(17, 24),
-(17, 25);
+(10, 24),
+(10, 25),
+(17, 22),
+(17, 23);
