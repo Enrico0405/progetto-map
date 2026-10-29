@@ -219,6 +219,10 @@ public class combatController {
         return sessioniInAttesaFuga.contains(idGiocatore);
     }
 
+    /**
+     * Fase 2: Chiamata quando l'utente specifica la direzione dopo una fuga riuscita.
+     * Effettua lo spostamento e ingaggia automaticamente un eventuale nemico presente nella nuova stanza.
+     */
     public String confermaDirezioneFuga(GameState gameState, String direzione) {
         int id = gameState.getIdGiocatore();
         if (!sessioniInAttesaFuga.contains(id)) {
@@ -245,11 +249,25 @@ public class combatController {
         player.setStanzaCorrente(destinazione);
         gameState.setStanzaAttuale(destinazione);
 
-        gameState.setInCombattimento(false);
         sessioniInAttesaFuga.remove(id);
 
-        return "Sei fuggito a rotta di collo verso " + dirNormalizzata.toUpperCase()
-                + "! Ti trovi ora in: " + destinazione.getNome() + ".";
+        // Controllo se la nuova stanza contiene un nemico ancora vivo
+        Nemico nemicoNuovo = destinazione.getNemicoPresente();
+        if (nemicoNuovo != null && nemicoNuovo.isVivo()) {
+            gameState.setInCombattimento(true);
+
+            String msgAgguato = (nemicoNuovo.getMessaggioAgguato() != null && !nemicoNuovo.getMessaggioAgguato().isBlank())
+                    ? nemicoNuovo.getMessaggioAgguato()
+                    : "Inizia lo scontro con " + nemicoNuovo.getNome() + "!";
+
+            return "Sei fuggito a rotta di collo verso " + dirNormalizzata.toUpperCase()
+                    + "! Ti trovi ora in: " + destinazione.getNome() + ".\n\n[NUOVO PERICOLO!] "
+                    + msgAgguato + " (HP Nemico: " + nemicoNuovo.getHp() + "/" + nemicoNuovo.getMaxHp() + ")";
+        } else {
+            gameState.setInCombattimento(false);
+            return "Sei fuggito a rotta di collo verso " + dirNormalizzata.toUpperCase()
+                    + "! Ti trovi ora in: " + destinazione.getNome() + ".";
+        }
     }
 
     private String eseguiTurnoNemico(Giocatore player, Nemico nemico, GameState gameState) {
@@ -291,5 +309,5 @@ public class combatController {
         }
 
         return sb.toString();
-    } 
+    }
 }
