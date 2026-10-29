@@ -386,11 +386,11 @@ public class GamePanel extends JPanel {
             
             String spriteNemico = response.getEnemySpritePath() != null ? response.getEnemySpritePath().toLowerCase() : "";
             
-            if (spriteNemico.contains("boss_finale") || spriteNemico.contains("boss3")) {
+            if (spriteNemico.contains("guardiano_del_tempio") || spriteNemico.contains("boss3")) {
                 nuovaTraccia = "colonne_sonore/combattimento/boss/boss_finale.mp3";
-            } else if (spriteNemico.contains("secondo_boss") || spriteNemico.contains("boss2")) {
+            } else if (spriteNemico.contains("re_stregore_angmar") || spriteNemico.contains("boss2")) {
                 nuovaTraccia = "colonne_sonore/combattimento/boss/secondo_boss.mp3";
-            } else if (spriteNemico.contains("primo_boss") || spriteNemico.contains("boss1")) {
+            } else if (spriteNemico.contains("gran_inquisitore") || spriteNemico.contains("boss1")) {
                 nuovaTraccia = "colonne_sonore/combattimento/boss/primo_boss.mp3";
             } else {
                 nuovaTraccia = "colonne_sonore/combattimento/tema_battaglia_normale.mp3";

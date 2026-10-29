@@ -291,5 +291,5 @@ public class combatController {
         }
 
         return sb.toString();
-    }
+    } 
 }
