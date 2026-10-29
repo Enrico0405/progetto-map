@@ -34,8 +34,8 @@ public class EnvironmentController {
                 public void run() {
                     while (!Thread.currentThread().isInterrupted()) {
                         try {
-                            // Attende 2 secondi (2000 ms) prima di infliggere il danno[cite: 1]
-                            Thread.sleep(2000);
+                            // Attende 5 secondi (5000 ms) prima di infliggere il danno[cite: 1]
+                            Thread.sleep(5000);
 
                             synchronized (state) {
                                 Stanza stanzaCorrente = state.getStanzaAttuale();
