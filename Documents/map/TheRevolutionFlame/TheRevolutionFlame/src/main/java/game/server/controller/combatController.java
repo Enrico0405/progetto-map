@@ -78,14 +78,20 @@ public class combatController {
         if (!nemico.isVivo()) {
             gameState.setInCombattimento(false);
             sessioniInAttesaFuga.remove(gameState.getIdGiocatore());
-            esito.append("\nHai sconfitto ").append(nemico.getNome()).append("!");
-            
-            // RICOMPENSA VITTORIA BOSS
-            gestisciRicompensaVittoria(player, nemico, esito);
+            if (nemico.getId() == 9){
+             esito.append("\n[GIOCO_FINITO]\n\n")
+             .append("HAI SCONFITTO IL RE STREGONE ANGMAR!\n")
+             .append("La sua oscurità svanisce e il regno è finalmente salvo dall'influenza della Fiamma!");
+            }
+            else {
+                esito.append("\nHai sconfitto ").append(nemico.getNome()).append("!");
+
+                 // RICOMPENSA VITTORIA BOSS STANDARD
+                gestisciRicompensaVittoria(player, nemico, esito);
+            }
 
             return esito.toString();
         }
-
         esito.append("(HP Nemico: ").append(nemico.getHp()).append("/").append(nemico.getMaxHp()).append(")\n");
         esito.append(eseguiTurnoNemico(player, nemico, gameState));
 
