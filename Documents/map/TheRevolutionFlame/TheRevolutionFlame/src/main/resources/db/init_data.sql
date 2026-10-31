@@ -54,24 +54,24 @@ INSERT INTO LIVELLO (id_livello, id_img) VALUES
 
 -- 3. NEMICO (Precisione impostata tra 0.70 e 0.85)
 INSERT INTO NEMICO (id_nemico, nome, max_hp, danno_attacco, precisione, tipo, messaggio_agguato, id_img) VALUES
-(2, 'soldato pesante della Guarnigione', 120, 15, 0.70, 'SOLDATO', 'Non scapperai!', 34),
+(2, 'soldato pesante della Guarnigione', 110, 15, 0.70, 'SOLDATO', 'Non scapperai!', 34),
 (3, 'Inquisitore della fiamma', 125, 18, 0.75, 'INQUISITORE', 'Convertiti alla Fiamma!', 35),
 (4, 'Gran Inquisitore', 130, 23, 0.80, 'BOSS', 'Convertiti o brucia', 36),
-(5, 'Assassino della Fiamma', 125, 20, 0.80, 'ACCOLITO', 'Muori in silenzio', 37),
+(5, 'Assassino della Fiamma', 130, 20, 0.80, 'ACCOLITO', 'Muori in silenzio', 37),
 (6, 'Guardiano del Tempio', 135, 30, 0.85, 'BOSS', 'Il mio padrone mi ricompenserà per la morte', 38),
-(8, 'Accolito', 125, 22, 0.75, 'ACCOLITO', 'Onore alla Fiamma', 39),
-(9, 'Re stregone Angmar', 140, 27, 0.85, 'BOSS', 'Sarai perfetto per i miei scopi', 40);
+(8, 'Accolito', 120, 22, 0.75, 'ACCOLITO', 'Onore alla Fiamma', 39),
+(9, 'Re stregone Angmar', 160, 35, 0.85, 'BOSS', 'Sarai perfetto per i miei scopi', 40);
 
 -- 4. ITEM
 INSERT INTO ITEM (id_item, nome, descrizione, id_img, utilizzabile_in_scontro, valore_effetto, target_effetto, tipo) VALUES
 (1, 'Spada', 'spada in ferro', 29, TRUE, 10, 'nessuno', 'ARMA'),
 (2, 'Lancia Oscura', 'Lancia incantata dal fuoco nero dell''oblio', 31, TRUE, 17, 'nessuno', 'ARMA'),
-(3, 'Ascia', 'Ascia incantata da magia evocatrice', 30, TRUE, 22, 'nessuno', 'ARMA'),
-(4, 'Arco di fuoco', 'Arco intriso della magia della fiamma', 32, TRUE, 15, 'nessuno', 'ARMA'),
-(5, 'Arco di fuoco', 'Arco intriso della magia della fiamma', 27, TRUE, 28, 'nessuno', 'ARMA'),
+(3, 'Ascia', 'Ascia incantata da magia evocatrice', 30, TRUE, 28, 'nessuno', 'ARMA'),
+(4, 'Arco di fuoco', 'Arco intriso della magia della fiamma', 32, TRUE, 24, 'nessuno', 'ARMA'),
+(5, 'Spada della Rovina', 'Il fuoco arde incandescente sulla lama di questa spada', 27, TRUE, 22, 'nessuno', 'ARMA'),
 (6, 'Staffa Incantata', 'Staffa incantata dal Re stregone', 28, TRUE, 30, 'nessuno', 'ARMA'),
-(7, 'pozione salute', 'pozione cura per 40hp', 26, FALSE, 40, 'SALUTE_GIOCATORE', 'POZIONE'),
-(8, 'pozione potenziamento', 'usata su un oggetto di tipo arma aumenta di 10 i suoi danni', 25, FALSE, 10, 'POTENZIAMENTO_ARMA', 'POZIONE'),
+(7, 'pozione salute', 'pozione cura per 40hp', 26, FALSE, 35, 'SALUTE_GIOCATORE', 'POZIONE'),
+(8, 'pozione potenziamento', 'usata su un oggetto di tipo arma aumenta di 10 i suoi danni', 25, FALSE, 5, 'POTENZIAMENTO_ARMA', 'POZIONE'),
 (9, 'Ordini dalla Guarnigione', 'Comandante le ordino di raggruppare gli abitanti del villaggio nel centro del villaggio e rimanere agli ordini degli inquisitori della fiamma', 24, FALSE, 0, 'nessuno', 'PERGAMENA'),
 (10, 'Ricerca degli eletti', 'Per ordine del sommo re stragone scovate gl infanti sensibili alla Fiamma .Promettete agli eletti o alle loro famiglie tutto quello che richiedono tanto una volta presi di loro non se ne avrà più traccia .', 24, FALSE, 0, 'nessuno', 'PERGAMENA'),
 (11, 'Lettera ad un amico', 'Ei ciao è da tanto che non ci sentiamo .Come sta tuo fratello ho saputo che è stato scelto dagli inquisitori per una vita migliore , anche mia sorella è stata scelta , ma non la vedo da mesi… . Tuo fratello ti ha riscritto ? o lo hai più rivisto ?', 24, FALSE, 0, 'nessuno', 'PERGAMENA'),
@@ -154,6 +154,8 @@ INSERT INTO ADIACENZE_STANZA (stanza_partenza, stanza_arrivo, verso_comando) VAL
 (13, 15, 'ovest'),
 (13, 14, 'est'),
 (13, 16, 'nord'),
+(14, 13, 'ovest'),
+(15, 13, 'est'),   
 (16, 13, 'sud'),
 (16, 17, 'nord'),
 (17, 16, 'sud');
