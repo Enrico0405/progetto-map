@@ -81,7 +81,8 @@ public class combatController {
             if (nemico.getId() == 9){
              esito.append("\n[GIOCO_FINITO]\n\n")
              .append("HAI SCONFITTO IL RE STREGONE ANGMAR!\n")
-             .append("La sua oscurità svanisce e il regno è finalmente salvo dall'influenza della Fiamma!");
+             .append("Capisci subito vincendo la battaglia che questo è un grande passo...però potrebbero essere rimasti altri segreti in giro da scovare.")
+             .append("Digita 'help' per vedere i comandi (puoi riesplorare stanze e prendere oggetti non presi prima");
             }
             else {
                 esito.append("\nHai sconfitto ").append(nemico.getNome()).append("!");
