@@ -19,9 +19,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         super("TheRevolutionFlame");
-        /*
-        inizializzazione del client di rete con indirizzo e porta di default
-        */
+        /* inizializzazione network */    
         this.networkClient = new NetworkClient("127.0.0.1", 12345);
         this.gamePanel = new GamePanel(this);
         this.inventoryDialog = new InventoryDialog(this);
